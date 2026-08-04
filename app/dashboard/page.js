@@ -3,7 +3,7 @@ import { fetchBenchmark } from "@/lib/benchmarks";
 import { Heatmap, HBarChart } from "@/components/charts";
 import AlertFeed from "@/components/AlertFeed";
 
-export const metadata = { title: "조직 대시보드 — SkillTwin" };
+export const metadata = { title: "조직 대시보드 — SkillWeave" };
 
 export default async function Dashboard() {
   const benchmark = await fetchBenchmark();

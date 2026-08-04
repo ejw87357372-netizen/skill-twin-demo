@@ -4,7 +4,7 @@ import {
 } from "@/lib/industry";
 import { HBarChart } from "@/components/charts";
 
-export const metadata = { title: "산업 동향 — SkillTwin" };
+export const metadata = { title: "산업 동향 — SkillWeave" };
 
 const fmtChange = (v) => (v > 0 ? `+${v}` : `${v}`);
 

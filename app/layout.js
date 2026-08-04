@@ -2,7 +2,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "SkillTwin — 스킬 온톨로지 인재관리 데모",
+  title: "SkillWeave — 스킬 온톨로지 인재관리 데모",
   description:
     "스킬 온톨로지 기반 AI 인재관리 시스템 데모. 가상 조직 데이터로 스킬 현황, 퇴사 영향 시뮬레이션, 인력 전망을 시연합니다.",
 };

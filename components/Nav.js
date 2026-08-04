@@ -17,7 +17,7 @@ export default function Nav() {
     <nav className="nav">
       <div className="container nav-inner">
         <Link href="/" className="nav-logo">
-          Skill<span>Twin</span>
+          Skill<span>Weave</span>
         </Link>
         <div className="nav-links">
           {LINKS.map((l) => (
