@@ -92,14 +92,23 @@ app/
   dashboard/          조직 대시보드 (히트맵·알림)
   people/             직원 목록 · [id] 프로필+퇴사 시뮬레이션
   simulation/         수요 예측 · 인력 전망 (클라이언트)
-  survey/             수용성 진단 설문 (동의→기본정보→25문항→결과)
+  survey/             수용성 진단 설문 (동의→기본정보→25문항→결과+산업 맥락)
+  industry/           산업 동향 탭 (산업별 고용 점유율·입이직 동태·국제 비교)
   api/benchmarks/     KOSIS 프록시 (폴백 내장)
   api/responses/      Supabase 응답 저장 (선택)
 components/           Nav, 차트(SVG), 알림 피드
 lib/data.js           가상 조직 데이터 + 시뮬레이션 로직
 lib/benchmarks.js     공식 통계 기준선 (폴백 포함)
 lib/survey.js         설문 문항·점수 로직 (구글폼 질문지와 동일 문구 유지 필수)
+lib/industry.js       산업 동향 데이터 (공표치/예시값 구분 — 예시값은 KOSIS에서 갱신)
 ```
+
+## 산업 동향 탭 데이터 갱신
+
+lib/industry.js의 모든 수치는 `verified` 플래그로 두 등급으로 나뉩니다.
+
+- `verified: true` (화면에 "공표치" 배지) — 사업체노동력조사(2026.5 등)·고용동향(2026.6)·미국 BLS JOLTS(2026.4) 공표 자료에서 확인한 값
+- `verified: false` (화면에 "예시값 · 갱신 필요" 배지) — 산업별 취업자 규모와 산업별 이직률. 상세표가 PDF/KOSIS에만 공표되어 근사값을 넣어둔 것이므로, **발표 전 KOSIS(kosis.kr → 사업체노동력조사 / 경제활동인구조사)에서 최신 공표치로 직접 갱신**하세요. 값만 바꾸면 화면은 자동 반영됩니다.
 
 ## 주의
 

@@ -5,6 +5,8 @@ import {
   scoreFactors, overallScore, typeLabel, weakestFactors,
 } from "@/lib/survey";
 import { RadarChart } from "@/components/charts";
+import { industryForSurveyOption } from "@/lib/industry";
+import Link from "next/link";
 
 // 단계: intro → consent → demo → questions → result
 export default function Survey() {
@@ -166,6 +168,7 @@ export default function Survey() {
           <p style={{ fontSize: 14.5, color: "var(--ink-2)", margin: "6px 0 0" }}>{w.tip}</p>
         </div>
       ))}
+      <IndustryContext option={demo.industry} />
       <div className="card" style={{ marginTop: 14 }}>
         {consent ? (
           saved === null ? <p className="hint">응답 저장 중…</p>
@@ -178,6 +181,37 @@ export default function Survey() {
           처음부터 다시
         </button>
       </div>
+    </div>
+  );
+}
+
+/** 응답자가 선택한 산업의 고용·이직 맥락 — 문항과 무관한 결과 화면 부가정보 */
+function IndustryContext({ option }) {
+  const hits = industryForSurveyOption(option);
+  if (!hits) return null;
+  return (
+    <div className="card" style={{ marginTop: 14 }}>
+      <strong>내 산업의 고용·이직 맥락 — {option}</strong>
+      {hits.map((d) => (
+        <p key={d.id} style={{ fontSize: 14, color: "var(--ink-2)", margin: "8px 0 0" }}>
+          <span style={{ fontWeight: 600, color: "var(--ink-1)" }}>{d.name}</span>
+          {d.change.value != null && d.change.verified && (
+            <>
+              {" · "}취업자{" "}
+              <span className="num" style={{ fontWeight: 700, color: d.change.value > 0 ? "var(--good-text)" : "var(--series-2)" }}>
+                {d.change.value > 0 ? "+" : ""}{d.change.value}만
+              </span>
+              (전년동월대비)
+            </>
+          )}
+          {" — "}{d.trendNote}
+        </p>
+      ))}
+      <p className="hint" style={{ marginTop: 10 }}>
+        이직이 잦거나 고용이 줄어드는 산업일수록 스킬 데이터 기반 인력 예측의 효용이 커집니다.
+        전체 산업 비교는 <Link href="/industry" style={{ color: "var(--series-1)" }}>산업 동향 탭</Link>에서 볼 수 있어요.
+        (출처·기준 시점도 그곳에 표기)
+      </p>
     </div>
   );
 }

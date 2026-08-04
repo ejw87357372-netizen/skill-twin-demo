@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/dashboard", label: "조직 대시보드" },
   { href: "/people", label: "인재 프로필" },
   { href: "/simulation", label: "시뮬레이션" },
+  { href: "/industry", label: "산업 동향" },
   { href: "/survey", label: "수용성 진단" },
 ];
 
