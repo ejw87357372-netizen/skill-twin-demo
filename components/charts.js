@@ -147,13 +147,13 @@ export function LineChart({ series, yLabel = "명", months = 12 }) {
 
 /** 스킬 온톨로지 그래프 — 원형 배치 네트워크 */
 export function OntologyGraph({ skills, edges, highlight = [] }) {
-  const W = 560, H = 400, cx = W / 2, cy = H / 2, R = 150;
+  const W = 620, H = 460, cx = W / 2, cy = H / 2, R = 172;
   const pos = {};
   skills.forEach((s, i) => {
     const a = (i / skills.length) * Math.PI * 2 - Math.PI / 2;
     pos[s.id] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
   });
-  const catColor = { "설계": "var(--series-1)", "공정": "var(--series-2)", "품질": "var(--series-3)", "데이터·AI": "var(--series-7)" };
+  const catColor = { "설계": "var(--series-1)", "공정": "var(--series-2)", "품질": "var(--series-3)", "데이터·AI": "var(--series-7)", "경영지원": "var(--series-4)" };
   const hi = new Set(highlight);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="스킬 온톨로지 그래프" style={{ maxWidth: 640 }}>

@@ -14,7 +14,8 @@ export default function Home() {
         <p>
           파나소닉 공장이 습도 변화를 예측해 미리 알림을 받듯, SkillWeave는 조직의
           스킬 데이터를 온톨로지로 연결해 인력 공백을 예측하고 선제 알림을 제공합니다.
-          가상 반도체 기업 &lsquo;세미코어&rsquo;의 데이터로 시연합니다.
+          엔지니어링 직군부터 재무·인사 같은 경영지원 직군까지 포함한 가상 반도체 기업
+          &lsquo;세미코어&rsquo;의 데이터로 시연합니다.
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <Link href="/dashboard" className="btn">조직 대시보드 보기</Link>
@@ -38,6 +39,7 @@ export default function Home() {
           <span className="badge"><i style={dot("var(--series-2)")} />공정</span>
           <span className="badge"><i style={dot("var(--series-3)")} />품질</span>
           <span className="badge"><i style={dot("var(--series-7)")} />데이터·AI</span>
+          <span className="badge"><i style={dot("var(--series-4)")} />경영지원</span>
         </div>
         <p className="hint" style={{ marginTop: 10 }}>
           Workday Skills Cloud, Eightfold AI 등 실제 탤런트 인텔리전스 플랫폼이 쓰는
@@ -60,6 +62,18 @@ export default function Home() {
           <strong>③ 인력 전망</strong>
           <p className="hint">공식 통계(고용노동부 사업체노동력조사) 이직률을 기준선으로 12개월 인력 변화를 전망하고 리스킬링 필요 시점을 알림.</p>
         </div>
+      </div>
+
+      <h2 className="section-title">우리 산업은 지금 어떤가 — 산업 동향</h2>
+      <div className="card" style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ minWidth: 260, flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-2)" }}>
+            전체 취업자 <strong className="num">2,915.4만명</strong>(2026.6), 월 이직률{" "}
+            <strong className="num">4.9%</strong>(2026.5). 이직이 잦은 산업일수록 스킬 기반
+            인력 예측의 효용이 커집니다 — 산업별 고용 점유율·입이직 동태·국제 비교를 한 화면에 정리했어요.
+          </p>
+        </div>
+        <Link href="/industry" className="btn btn-ghost">산업 동향 보기 →</Link>
       </div>
     </>
   );
