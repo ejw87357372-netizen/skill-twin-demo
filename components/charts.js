@@ -2,9 +2,9 @@
 // 마크 스펙: 얇은 막대 + 4px 라운드 데이터 끝, 2px 라인, 은은한 그리드
 
 /** 가로 막대 차트 — 단일 시리즈(파랑), 값 직접 표기 */
-export function HBarChart({ items, max, unit = "명" }) {
+export function HBarChart({ items, max, unit = "명", labelW = 150 }) {
   const m = max ?? Math.max(...items.map((d) => d.value), 1);
-  const rowH = 30, labelW = 150, chartW = 420, valueW = 40;
+  const rowH = 30, chartW = 420, valueW = 40;
   const H = items.length * rowH + 8;
   return (
     <svg

@@ -10,6 +10,7 @@ const GROUPS = [
       { href: "/dashboard", label: "조직 대시보드" },
       { href: "/people", label: "인재 프로필" },
       { href: "/simulation", label: "시뮬레이션" },
+      { href: "/gap", label: "스킬 갭 분석" },
       { href: "/industry", label: "산업 동향" },
     ],
   },
