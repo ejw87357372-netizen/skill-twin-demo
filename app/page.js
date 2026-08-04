@@ -17,10 +17,21 @@ export default function Home() {
           엔지니어링 직군부터 재무·인사 같은 경영지원 직군까지 포함한 가상 반도체 기업
           &lsquo;세미코어&rsquo;의 데이터로 시연합니다.
         </p>
-        <div style={{ display: "flex", gap: 10 }}>
-          <Link href="/dashboard" className="btn">조직 대시보드 보기</Link>
-          <Link href="/simulation" className="btn btn-ghost">시뮬레이션 해보기</Link>
-          <Link href="/survey" className="btn btn-ghost">수용성 진단 참여</Link>
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 4 }}>
+          <div>
+            <div className="hint" style={{ fontWeight: 700, marginBottom: 6 }}>인사담당자·경영진이라면</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Link href="/dashboard" className="btn">조직 대시보드 보기</Link>
+              <Link href="/simulation" className="btn btn-ghost">시뮬레이션 해보기</Link>
+            </div>
+          </div>
+          <div>
+            <div className="hint" style={{ fontWeight: 700, marginBottom: 6 }}>직원이라면</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <Link href="/skill-check" className="btn">스킬 진단 해보기</Link>
+              <Link href="/survey" className="btn btn-ghost">수용성 진단 참여</Link>
+            </div>
+          </div>
         </div>
       </section>
 

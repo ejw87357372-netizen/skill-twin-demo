@@ -188,7 +188,7 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
   );
 }
 
-/** 레이더 차트 — 6요인 프로필 (1~7 척도) */
+/** 레이더 차트 — 프로필 비교 (items[].value = 실선 채움, items[].target = 점선 기준선) */
 export function RadarChart({ items, max = 7 }) {
   const W = 420, H = 360, cx = W / 2, cy = H / 2 + 6, R = 120;
   const n = items.length;
@@ -219,6 +219,12 @@ export function RadarChart({ items, max = 7 }) {
           </g>
         );
       })}
+      {items.some((d) => d.target != null) && (
+        <polygon
+          points={items.map((d, i) => pt(i, d.target ?? 0).join(",")).join(" ")}
+          fill="none" stroke="var(--series-2)" strokeWidth="1.8" strokeDasharray="5 4" strokeLinejoin="round"
+        />
+      )}
       <polygon points={poly} fill="var(--series-1)" fillOpacity="0.18" stroke="var(--series-1)" strokeWidth="2" strokeLinejoin="round" />
       {items.map((d, i) => {
         const [x, y] = pt(i, d.value);
