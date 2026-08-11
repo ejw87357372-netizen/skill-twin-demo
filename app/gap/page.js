@@ -1,8 +1,9 @@
 import { orgGapReport } from "@/lib/gap";
 import { HBarChart } from "@/components/charts";
 import Link from "next/link";
+import Reveal from "@/components/Reveal";
 
-export const metadata = { title: "스킬 갭 분석 — SkillWeave" };
+export const metadata = { title: "스킬 갭 분석 — Weave" };
 
 export default function Gap() {
   const { byRole, courseDemand, teamReadiness, total } = orgGapReport();
@@ -61,6 +62,7 @@ export default function Gap() {
         </p>
       </div>
 
+      <Reveal>
       <h2 className="section-title">교육 수요 Top 10 — 어떤 교육을 먼저 열어야 하나</h2>
       <div className="card">
         <HBarChart items={courseDemand} unit="명" labelW={215} />
@@ -69,7 +71,9 @@ export default function Gap() {
           같은 예산으로 조직 준비도를 가장 빨리 올릴 수 있습니다.
         </p>
       </div>
+      </Reveal>
 
+      <Reveal>
       <h2 className="section-title">팀별 평균 성장 준비도</h2>
       <div className="card">
         <HBarChart items={teamReadiness} unit="%" max={100} />
@@ -78,6 +82,7 @@ export default function Gap() {
           낮은 팀은 교육 예산 배분과 리스킬링 우선 대상 후보입니다.
         </p>
       </div>
+      </Reveal>
     </>
   );
 }

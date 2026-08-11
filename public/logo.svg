@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 84" role="img" aria-label="Weave 로고">
+  <defs>
+
+    <path id="wv-ring" d="M-25 -10 A15 15 0 0 1 -10 -25 H10 A15 15 0 0 1 25 -10 V10
+                           A15 15 0 0 1 10 25 H-10 A15 15 0 0 1 -25 10 Z"/>
+    <!-- 두 교차점을 잇는 대각선(x+y=120)의 아래쪽 반평면 -->
+    <clipPath id="wv-half">
+      <path d="M120 0 L120 120 L0 120 Z"/>
+    </clipPath>
+    </defs>
+  <g color="#1B3960" transform="translate(2 3) scale(0.65)">
+
+  <g fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round">
+    <use href="#wv-ring" transform="translate(47 47)"/>
+    <use href="#wv-ring" transform="translate(73 73)"/>
+    <g clip-path="url(#wv-half)">
+      <use href="#wv-ring" transform="translate(47 47)"/>
+    </g>
+  </g>
+</g>
+  <text x="92" y="55" font-family="Pretendard, Inter, 'Segoe UI', -apple-system, sans-serif"
+        font-size="42" font-weight="700" letter-spacing="-1.4" fill="#1B3960">Weave</text>
+</svg>

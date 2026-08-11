@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" role="img" aria-label="Weave 마크">
+  <defs>
+    <!-- 리본의 앞면/뒷면 명암 -->
+    <linearGradient id="wv-navy" x1="0" y1="0.1" x2="1" y2="0.9">
+      <stop offset="0"    stop-color="#1b3960"/>
+      <stop offset="0.42" stop-color="#3d6b9e"/>
+      <stop offset="0.72" stop-color="#28527f"/>
+      <stop offset="1"    stop-color="#1a3557"/>
+    </linearGradient>
+    <linearGradient id="wv-cream" x1="0" y1="0.1" x2="1" y2="0.9">
+      <stop offset="0"    stop-color="#f4e6d1"/>
+      <stop offset="0.4"  stop-color="#fffaf3"/>
+      <stop offset="0.75" stop-color="#ead6ba"/>
+      <stop offset="1"    stop-color="#f7ecdb"/>
+    </linearGradient>
+    <linearGradient id="wv-navy-v" x1="0" y1="0" x2="1" y2="0.15">
+      <stop offset="0"    stop-color="#3a6899"/>
+      <stop offset="0.55" stop-color="#20416a"/>
+      <stop offset="1"    stop-color="#2f5c8c"/>
+    </linearGradient>
+    <linearGradient id="wv-cream-v" x1="0" y1="0" x2="1" y2="0.15">
+      <stop offset="0"    stop-color="#fdf6ea"/>
+      <stop offset="0.55" stop-color="#e6d1b3"/>
+      <stop offset="1"    stop-color="#fbf3e6"/>
+    </linearGradient>
+
+    <!-- 네이비 무한대 밴드 영역만 흰색 → 이 안에서만 세로 리본을 위로 올려 엮음 -->
+    <mask id="wv-band-navy" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="100">
+      <rect width="120" height="100" fill="black"/>
+      <path d="M11 50 C11 74 34 76 60 50 C86 24 109 26 109 50"
+            fill="none" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    </mask>
+  </defs>
+
+  <g fill="none" stroke-linecap="round">
+    <!-- ① 세로 리본 (뒤) : 위·아래로 면이 뒤집히는 리본 -->
+    <g stroke-width="12.5">
+      <path d="M46 12 C43.6 24 43 36 43 50" stroke="url(#wv-navy-v)"/>
+      <path d="M43 50 C43 64 43.6 76 46 88" stroke="url(#wv-cream-v)"/>
+      <path d="M74 12 C76.4 24 77 36 77 50" stroke="url(#wv-cream-v)"/>
+      <path d="M77 50 C77 64 76.4 76 74 88" stroke="url(#wv-navy-v)"/>
+    </g>
+
+    <!-- ② 무한대 리본 (앞) : 크림 = 좌상→우하, 네이비 = 좌하→우상 -->
+    <g stroke-width="12">
+      <path d="M11 50 C11 26 34 24 60 50 C86 76 109 74 109 50" stroke="url(#wv-cream)"/>
+      <path d="M11 50 C11 74 34 76 60 50 C86 24 109 26 109 50" stroke="url(#wv-navy)"/>
+    </g>
+
+    <!-- ③ 엮임 : 세로 리본이 네이비 밴드 위로 지나가는 부분만 다시 얹음 -->
+    <g stroke-width="12.5" mask="url(#wv-band-navy)">
+      <path d="M43 50 C43 64 43.6 76 46 88" stroke="url(#wv-cream-v)"/>
+      <path d="M74 12 C76.4 24 77 36 77 50" stroke="url(#wv-cream-v)"/>
+    </g>
+  </g>
+</svg>

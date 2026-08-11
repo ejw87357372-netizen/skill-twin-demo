@@ -23,8 +23,16 @@ export function HBarChart({ items, max, unit = "명", labelW = 150 }) {
             <text x={labelW - 8} y={y + 13} textAnchor="end" fontSize="12" fill="var(--ink-2)">
               {d.label}
             </text>
-            <rect x={labelW} y={y} width={w} height={18} rx={4} fill={d.color || "var(--series-1)"} />
-            <text x={labelW + w + 7} y={y + 13} fontSize="12" fill="var(--ink-2)" className="num">
+            <rect
+              x={labelW} y={y} width={w} height={18} rx={4}
+              fill={d.color || "var(--series-1)"}
+              data-draw="bar"
+              style={{ animationDelay: `${i * 55}ms`, transformBox: "fill-box" }}
+            />
+            <text
+              x={labelW + w + 7} y={y + 13} fontSize="12" fill="var(--ink-2)" className="num"
+              data-draw="fade" style={{ animationDelay: `${i * 55 + 380}ms` }}
+            >
               {d.value}
             </text>
           </g>
@@ -74,6 +82,8 @@ export function Heatmap({ rows, cols, colLabel }) {
                   height={cell}
                   rx={4}
                   fill={color(c.n)}
+                  data-draw="pop"
+                  style={{ animationDelay: `${(i + j) * 38}ms`, transformBox: "fill-box" }}
                 />
                 {c.n > 0 && (
                   <text
@@ -132,9 +142,17 @@ export function LineChart({ series, yLabel = "명", months = 12 }) {
         return (
           <g key={s.name}>
             <title>{`${s.name}: ${last.n}${yLabel} (12개월 후)`}</title>
-            <path d={d} fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round" />
-            <circle cx={x(last.month)} cy={y(last.n)} r="4.5" fill={s.color} stroke="var(--surface-1)" strokeWidth="2" />
-            <text x={x(last.month) - 6} y={y(last.n) + dy} textAnchor="end" fontSize="11.5" fontWeight="600" fill="var(--ink-1)" className="num">
+            <path
+              d={d} fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round"
+              data-draw="line" style={{ animationDelay: `${si * 160}ms` }}
+            />
+            <circle
+              cx={x(last.month)} cy={y(last.n)} r="4.5" fill={s.color} stroke="var(--surface-1)" strokeWidth="2"
+              data-draw="pop" style={{ animationDelay: `${si * 160 + 1150}ms`, transformBox: "fill-box" }}
+            />
+            <text x={x(last.month) - 6} y={y(last.n) + dy} textAnchor="end" fontSize="11.5" fontWeight="600" fill="var(--ink-1)" className="num"
+              data-draw="fade" style={{ animationDelay: `${si * 160 + 1150}ms` }}
+            >
               {s.name} {last.n}
             </text>
           </g>
@@ -157,15 +175,16 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
   const hi = new Set(highlight);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="스킬 온톨로지 그래프" style={{ maxWidth: 640 }}>
-      {edges.map(([a, b]) => (
+      {edges.map(([a, b], ei) => (
         <line
           key={a + b}
           x1={pos[a].x} y1={pos[a].y} x2={pos[b].x} y2={pos[b].y}
           stroke={hi.has(a) && hi.has(b) ? "var(--series-2)" : "var(--grid)"}
           strokeWidth={hi.has(a) && hi.has(b) ? 2 : 1}
+          data-draw="fade" style={{ animationDelay: `${420 + ei * 26}ms` }}
         />
       ))}
-      {skills.map((s) => (
+      {skills.map((s, si) => (
         <g key={s.id}>
           <title>{`${s.name} (${s.cat})`}</title>
           <circle
@@ -174,6 +193,7 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
             fill={catColor[s.cat] || "var(--series-1)"}
             stroke="var(--surface-1)" strokeWidth="2"
             opacity={hi.size === 0 || hi.has(s.id) ? 1 : 0.35}
+            data-draw="pop" style={{ animationDelay: `${si * 32}ms`, transformBox: "fill-box" }}
           />
           <text
             x={pos[s.id].x} y={pos[s.id].y + (pos[s.id].y > cy ? 24 : -14)}
@@ -225,10 +245,19 @@ export function RadarChart({ items, max = 7 }) {
           fill="none" stroke="var(--series-2)" strokeWidth="1.8" strokeDasharray="5 4" strokeLinejoin="round"
         />
       )}
-      <polygon points={poly} fill="var(--series-1)" fillOpacity="0.18" stroke="var(--series-1)" strokeWidth="2" strokeLinejoin="round" />
+      <polygon
+        points={poly} fill="var(--series-1)" fillOpacity="0.18"
+        stroke="var(--series-1)" strokeWidth="2" strokeLinejoin="round"
+        data-draw="pop" style={{ transformBox: "fill-box", animationDelay: "120ms" }}
+      />
       {items.map((d, i) => {
         const [x, y] = pt(i, d.value);
-        return <circle key={d.label} cx={x} cy={y} r="4" fill="var(--series-1)" stroke="var(--surface-1)" strokeWidth="2" />;
+        return (
+          <circle
+            key={d.label} cx={x} cy={y} r="4" fill="var(--series-1)" stroke="var(--surface-1)" strokeWidth="2"
+            data-draw="pop" style={{ transformBox: "fill-box", animationDelay: `${380 + i * 60}ms` }}
+          />
+        );
       })}
     </svg>
   );

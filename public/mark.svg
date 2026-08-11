@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Weave 마크">
+  <!--
+    Weave 마크 — 두 개의 고리가 사슬처럼 실제로 맞물린 형태.
+    대각선 아래쪽 절반에서만 고리 A를 다시 얹어, 한쪽 교차는 A가 위·다른 쪽은 B가 위.
+    (물리적으로 성립하는 링크 구조) 색은 currentColor 상속 → 다크모드 자동 대응.
+  -->
+  <defs>
+    <path id="wv-ring" d="M-25 -10 A15 15 0 0 1 -10 -25 H10 A15 15 0 0 1 25 -10 V10
+                           A15 15 0 0 1 10 25 H-10 A15 15 0 0 1 -25 10 Z"/>
+    <!-- 두 교차점을 잇는 대각선(x+y=120)의 아래쪽 반평면 -->
+    <clipPath id="wv-half">
+      <path d="M120 0 L120 120 L0 120 Z"/>
+    </clipPath>
+  </defs>
+
+  <g fill="none" stroke="currentColor" stroke-width="11" stroke-linejoin="round">
+    <use href="#wv-ring" transform="translate(47 47)"/>
+    <use href="#wv-ring" transform="translate(73 73)"/>
+    <g clip-path="url(#wv-half)">
+      <use href="#wv-ring" transform="translate(47 47)"/>
+    </g>
+  </g>
+</svg>

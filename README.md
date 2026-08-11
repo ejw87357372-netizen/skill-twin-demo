@@ -1,4 +1,4 @@
-# SkillWeave — 스킬 온톨로지 인재관리 데모
+# Weave — 스킬 온톨로지 인재관리 데모
 
 성균관대 AI융합운영전공 학술연구 「스킬 온톨로지 기반 AI 인재관리 시스템 직원 수용성 연구」의 데모 사이트.
 파나소닉 공장 디지털 트윈(팔란티어 파운드리)의 구조를 인사(HR)에 옮긴 시연입니다.
@@ -30,7 +30,7 @@ npm run dev   # http://localhost:3000
 ```bash
 git init
 git add .
-git commit -m "SkillWeave 데모 초기 버전"
+git commit -m "Weave 데모 초기 버전"
 git branch -M main
 git remote add origin https://github.com/<내아이디>/skill-twin-demo.git
 git push -u origin main

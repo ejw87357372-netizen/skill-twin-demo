@@ -107,7 +107,7 @@ export default function SkillCheck() {
   }
 
   // 결과
-  const { role, met, gaps, bridges, readiness } = result;
+  const { role, met, gaps, bridges, tasks, path, bridgeSkills, currentRole, readiness } = result;
   return (
     <div style={{ maxWidth: 720, margin: "32px auto" }}>
       <div className="card" style={{ textAlign: "center" }}>
@@ -132,6 +132,61 @@ export default function SkillCheck() {
           }))}
         />
         <p className="hint">점선 안쪽이 비어 있는 축이 성장 여지가 있는 스킬입니다.</p>
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <strong>경력 경로 — 지금 위치에서 목표까지</strong>
+        <p className="hint" style={{ margin: "4px 0 10px" }}>
+          입력하신 스킬로 추정한 현재 위치는 <strong style={{ color: "var(--ink-1)" }}>{currentRole.name}</strong>입니다.
+          직무 간 이동 가능성은 두 직무가 공유하는 필수 스킬(전이 가능 스킬)로 계산했습니다.
+        </p>
+        <div style={{ display: "flex", alignItems: "stretch", gap: 8, flexWrap: "wrap" }}>
+          {path.map((p, i) => (
+            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {i > 0 && <span style={{ color: "var(--ink-muted)", fontSize: 18 }}>→</span>}
+              <div style={{
+                minWidth: 150, padding: "10px 12px", borderRadius: 10,
+                border: `1px solid ${i === path.length - 1 ? "var(--series-1)" : "var(--axis)"}`,
+                background: i === path.length - 1
+                  ? "color-mix(in srgb, var(--series-1) 8%, transparent)" : "var(--surface-1)",
+              }}>
+                <div className="hint" style={{ fontSize: 11 }}>
+                  {i === 0 ? "현재 추정" : i === path.length - 1 ? "목표" : `${i}단계`}
+                </div>
+                <strong style={{ fontSize: 13.5 }}>{p.name}</strong>
+                <div className="hint" style={{ marginTop: 2 }}>
+                  준비도 <span className="num">{p.readiness}%</span>
+                  {p.shortage > 0 && ` · 부족 ${p.shortage}개`}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {bridgeSkills.length > 0 && (
+          <p className="hint" style={{ marginTop: 10 }}>
+            전이 가능 스킬: {bridgeSkills.join(", ")} — 이미 가진 이 스킬들이 두 직무를 잇습니다.
+          </p>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <strong>과업별 충족도 — {role.name}</strong>
+        <p className="hint" style={{ margin: "4px 0 8px" }}>
+          직무를 과업 단위로 나눠 본 결과입니다. ● 필수 · ○ 선택
+        </p>
+        {tasks.map((t) => (
+          <div key={t.name} style={{ borderTop: "1px solid var(--grid)", paddingTop: 9, marginTop: 9 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+              <strong style={{ fontSize: 14 }}>{t.name}</strong>
+              <span className="badge" style={{ color: t.done ? "var(--good-text)" : "var(--series-2)", fontSize: 11.5 }}>
+                {t.done ? "수행 가능" : `보완 필요: ${t.missing.join(", ")}`}
+              </span>
+            </div>
+            <p className="hint" style={{ margin: "4px 0 0" }}>
+              {t.items.map((i) => `${i.req === "E" ? "●" : "○"} ${i.name} Lv.${i.have}/${i.need}`).join("   ")}
+            </p>
+          </div>
+        ))}
       </div>
 
       {met.length > 0 && (

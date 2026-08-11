@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Mark from "@/components/Mark";
 
 const GROUPS = [
   { label: null, links: [{ href: "/", label: "소개" }] },
@@ -29,7 +30,9 @@ export default function Nav() {
     <nav className="nav">
       <div className="container nav-inner">
         <Link href="/" className="nav-logo">
-          Skill<span>Weave</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <Mark size={20} style={{ verticalAlign: "-4px", marginRight: 8, color: "var(--series-1)" }} />
+          <span>Weave</span>
         </Link>
         <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           {GROUPS.map((g, gi) => (

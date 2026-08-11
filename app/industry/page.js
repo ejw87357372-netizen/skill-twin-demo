@@ -3,8 +3,9 @@ import {
   INDUSTRIES, US_QUITS, US_QUITS_NOTE, EMPLOYED_TOTAL,
 } from "@/lib/industry";
 import { HBarChart } from "@/components/charts";
+import Reveal from "@/components/Reveal";
 
-export const metadata = { title: "산업 동향 — SkillWeave" };
+export const metadata = { title: "산업 동향 — Weave" };
 
 const fmtChange = (v) => (v > 0 ? `+${v}` : `${v}`);
 
@@ -57,6 +58,7 @@ export default function Industry() {
         ))}
       </section>
 
+      <Reveal>
       <h2 className="section-title">산업별 고용 점유율 — 전체 취업자 대비 (%)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={false} /> <span className="hint">산업별 규모는 연간 공표치 기준 근사, 분모(취업자 {EMPLOYED_TOTAL}만명)는 2026.6 공표치</span></div>
@@ -66,7 +68,9 @@ export default function Industry() {
           곧 전체 노동시장의 수용성을 좌우한다는 점에서, 설문의 산업별 분석 가중치 참고용으로 쓸 수 있습니다.
         </p>
       </div>
+      </Reveal>
 
+      <Reveal>
       <h2 className="section-title">어느 산업에서 사람이 늘고 줄었나 — 전년동월대비 증감 (만명)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={true} asOf="2026.6 / 2026.5" /> <span className="hint">경제활동인구조사(취업자)·사업체노동력조사(종사자) 공표치</span></div>
@@ -87,7 +91,9 @@ export default function Industry() {
           </tbody>
         </table>
       </div>
+      </Reveal>
 
+      <Reveal>
       <h2 className="section-title">이직 동태 — 입직률·이직률 추이와 산업별 수준</h2>
       <div className="grid grid-2">
         <div className="card">
@@ -119,7 +125,9 @@ export default function Industry() {
           </p>
         </div>
       </div>
+      </Reveal>
 
+      <Reveal>
       <h2 className="section-title">국제 비교 — 미국 산업별 자발적 이직률 (JOLTS quits rate)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={true} asOf="2026.4" /> <span className="hint">미국 노동통계국(BLS), 계절조정</span></div>
@@ -129,6 +137,7 @@ export default function Industry() {
         />
         <p className="hint">{US_QUITS_NOTE}</p>
       </div>
+      </Reveal>
 
       <h2 className="section-title">출처</h2>
       <div className="card">

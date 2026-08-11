@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import {
   INTRO, QUESTIONS, DEMOGRAPHICS, SCALE_LABELS,
-  scoreFactors, overallScore, typeLabel, weakestFactors,
+  scoreFactors, acceptanceScore, typeLabel, weakestFactors, pct,
 } from "@/lib/survey";
 import { RadarChart } from "@/components/charts";
 import { industryForSurveyOption } from "@/lib/industry";
@@ -141,30 +141,52 @@ export default function Survey() {
   }
 
   // 결과
-  const score = overallScore(factors);
+  const score = acceptanceScore(factors) ?? 0;
   const type = typeLabel(score);
   const weak = weakestFactors(factors);
-  const radar = ["PE", "EE", "SI", "FC", "PC", "AF"].map((k) => ({
-    label: k === "PC" ? "프라이버시 안심도" : { PE: "성과기대", EE: "노력기대", SI: "사회적 영향", FC: "촉진조건", AF: "공정성 인식" }[k],
-    value: factors[k]?.display ?? 0,
+  // 레이더에는 방향이 같은 5요인만. 역방향 요인(프라이버시 우려)은 아래에 따로 표시한다.
+  const radar = ["PE", "EE", "SI", "FC", "AF"].map((k) => ({
+    label: { PE: "성과기대", EE: "노력기대", SI: "사회적 영향", FC: "촉진조건", AF: "알고리즘 공정성 인식" }[k],
+    value: factors[k]?.raw ?? 0,
   }));
+  const privacy = factors.PC?.raw ?? 0;
 
   return (
     <div style={{ maxWidth: 640, margin: "32px auto" }}>
       <div className="card" style={{ textAlign: "center" }}>
-        <p className="hint" style={{ margin: 0 }}>나의 AI 인재관리 수용 준비도</p>
+        <p className="hint" style={{ margin: 0 }}>나의 수용 의도 (연구 종속변수)</p>
         <div style={{ fontSize: 52, fontWeight: 800, letterSpacing: -1 }} className="num">{score}<span style={{ fontSize: 22, fontWeight: 600 }}>점</span></div>
         <span className="badge" style={{ color: "var(--series-1)", fontSize: 14 }}>{type.name}</span>
         <p style={{ fontSize: 14.5, color: "var(--ink-2)" }}>{type.desc}</p>
       </div>
       <div className="card" style={{ marginTop: 14 }}>
-        <strong>6요인 프로필</strong>
+        <strong>수용 요인 프로필 (5요인)</strong>
         <RadarChart items={radar} />
-        <p className="hint">프라이버시 안심도는 우려 문항을 역산(8−점수)한 값입니다. 값이 클수록 수용에 유리합니다.</p>
+        <p className="hint">
+          모두 값이 클수록 수용에 유리한 방향의 요인입니다. 방향이 반대인 프라이버시 우려는 아래에 따로 표시했습니다.
+        </p>
+      </div>
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+          <strong>프라이버시 우려</strong>
+          <span className="num" style={{ fontSize: 20, fontWeight: 700, color: privacy >= 5 ? "var(--series-2)" : "var(--ink-1)" }}>
+            {privacy.toFixed(1)}<span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-muted)" }}> / 7</span>
+          </span>
+        </div>
+        <div style={{ height: 8, background: "var(--grid)", borderRadius: 99, margin: "8px 0 4px" }}>
+          <div style={{ height: 8, width: `${pct(privacy)}%`, background: privacy >= 5 ? "var(--series-2)" : "var(--series-1)", borderRadius: 99 }} />
+        </div>
+        <p className="hint">
+          이 요인만 방향이 반대입니다 — <strong>값이 클수록 우려가 크고 수용에 불리</strong>합니다.
+          연구 모형에서 프라이버시 우려는 수용 의도에 부(−)의 영향을 미칠 것으로 가정합니다.
+        </p>
       </div>
       {weak.map((w) => (
         <div className="card" key={w.key} style={{ marginTop: 14 }}>
-          <strong>가장 낮은 요인: {w.name} ({w.v.toFixed(1)}점)</strong>
+          <strong>
+            {w.negative ? "가장 큰 저해 요인" : "가장 낮은 요인"}: {w.name} ({w.v.toFixed(1)}점{w.negative ? " · 높을수록 불리" : ""})
+          </strong>
           <p style={{ fontSize: 14.5, color: "var(--ink-2)", margin: "6px 0 0" }}>{w.tip}</p>
         </div>
       ))}

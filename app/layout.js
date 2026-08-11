@@ -2,7 +2,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "SkillWeave — 스킬 온톨로지 인재관리 데모",
+  title: "Weave — 스킬 온톨로지 인재관리 데모",
   description:
     "스킬 온톨로지 기반 AI 인재관리 시스템 데모. 가상 조직 데이터로 스킬 현황, 퇴사 영향 시뮬레이션, 인력 전망을 시연합니다.",
 };
@@ -10,6 +10,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="ko">
+      <head>
+        {/* Pretendard (오픈소스 한글 폰트) — CDN 서브셋 */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
       <body>
         <Nav />
         <main className="container">{children}</main>

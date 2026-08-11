@@ -55,8 +55,11 @@ html, body { margin: 0; padding: 0; }
 body {
   background: var(--page);
   color: var(--ink-1);
-  font-family: system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: "Pretendard Variable", Pretendard, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Segoe UI", "Noto Sans KR", sans-serif;
   line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all; /* 한글 단어 단위 줄바꿈 */
 }
 a { color: inherit; text-decoration: none; }
 
@@ -70,11 +73,12 @@ a { color: inherit; text-decoration: none; }
   border-bottom: 1px solid var(--border);
 }
 .nav-inner { display: flex; align-items: center; gap: 20px; min-height: 56px; flex-wrap: wrap; padding: 6px 0; }
-.nav-logo { font-weight: 700; font-size: 15px; }
+.nav-logo { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
 .nav-logo span { color: var(--series-1); }
 .nav-links { display: flex; gap: 4px; margin-left: auto; }
 .nav-links a {
-  padding: 6px 12px; border-radius: 8px; font-size: 14px; color: var(--ink-2);
+  padding: 6px 9px; border-radius: 8px; font-size: 13.5px; color: var(--ink-2);
+  white-space: nowrap;
 }
 .nav-links a:hover { background: var(--border); }
 .nav-links a.active { color: var(--ink-1); font-weight: 600; }
@@ -149,6 +153,86 @@ select {
   display: inline-block; font-size: 12px; font-weight: 600; color: var(--series-1);
   border: 1px solid color-mix(in srgb, var(--series-1) 35%, transparent);
   border-radius: 999px; padding: 3px 10px; margin-bottom: 16px;
+}
+
+/* ── 랜딩 히어로 (센터 정렬 + 은은한 그라데이션 워시) ── */
+.hero-wash {
+  position: relative;
+  margin: 0 calc(50% - 50vw); padding: 96px 20px 40px;
+  text-align: center; overflow: hidden;
+}
+.hero-wash::before {
+  content: ""; position: absolute; inset: -30% -10% auto -10%; height: 150%;
+  background:
+    radial-gradient(50% 55% at 18% 42%, color-mix(in srgb, var(--series-7) 26%, transparent) 0%, transparent 70%),
+    radial-gradient(46% 52% at 82% 38%, color-mix(in srgb, var(--series-1) 24%, transparent) 0%, transparent 70%),
+    radial-gradient(40% 40% at 50% 96%, color-mix(in srgb, var(--series-2) 13%, transparent) 0%, transparent 70%);
+  filter: blur(18px); z-index: -1; pointer-events: none;
+}
+.hero-wash h1 {
+  font-size: clamp(38px, 6.2vw, 68px); line-height: 1.14;
+  letter-spacing: -2.5px; font-weight: 700; margin: 14px 0 18px;
+}
+.hero-wash .lede {
+  color: var(--ink-2); font-size: clamp(15px, 1.7vw, 19px);
+  max-width: 640px; margin: 0 auto 28px;
+}
+.cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.cta-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.cta-group-label {
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--ink-muted);
+}
+.btn-pill { border-radius: 999px; padding: 11px 22px; }
+
+/* 히어로 아래 떠 있는 미리보기 카드 */
+.hero-shot {
+  max-width: 940px; margin: 44px auto 0;
+  border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface-1); overflow: hidden;
+  box-shadow: 0 28px 70px -28px rgba(11, 11, 30, 0.42), 0 2px 8px rgba(11, 11, 30, 0.06);
+}
+.hero-shot-bar {
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--page) 60%, var(--surface-1));
+}
+.hero-shot-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--axis); }
+.hero-shot-url {
+  margin-left: 8px; font-size: 12px; color: var(--ink-muted);
+  background: var(--page); border-radius: 999px; padding: 3px 12px;
+}
+.hero-shot-body { padding: 20px; }
+
+/* ── 스크롤 리빌 ── */
+.reveal {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.22, 0.8, 0.3, 1), transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+.reveal.in { opacity: 1; transform: none; }
+
+/* 차트가 그려지는 연출: 리빌된 뒤에만 재생 */
+.reveal [data-draw="bar"] { transform: scaleX(0); transform-origin: left center; }
+.reveal.in [data-draw="bar"] { animation: drawBar 0.85s cubic-bezier(0.22, 0.8, 0.3, 1) forwards; }
+@keyframes drawBar { to { transform: scaleX(1); } }
+
+.reveal [data-draw="line"] { stroke-dasharray: 1400; stroke-dashoffset: 1400; }
+.reveal.in [data-draw="line"] { animation: drawLine 1.5s cubic-bezier(0.3, 0.7, 0.3, 1) forwards; }
+@keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+.reveal [data-draw="fade"] { opacity: 0; }
+.reveal.in [data-draw="fade"] { animation: drawFade 0.7s ease forwards; }
+@keyframes drawFade { to { opacity: 1; } }
+
+.reveal [data-draw="pop"] { transform: scale(0.55); transform-origin: center; opacity: 0; }
+.reveal.in [data-draw="pop"] { animation: drawPop 0.6s cubic-bezier(0.34, 1.4, 0.5, 1) forwards; }
+@keyframes drawPop { to { transform: scale(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal.in { opacity: 1; transform: none; transition: none; }
+  .reveal [data-draw], .reveal.in [data-draw] {
+    animation: none !important; opacity: 1; transform: none; stroke-dashoffset: 0;
+  }
 }
 
 .footer-note {
