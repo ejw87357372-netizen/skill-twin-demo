@@ -16,7 +16,7 @@ const MENU_GROUPS = [
     ["matching", "프로젝트 매칭"], ["retention", "인재 유지관리"],
   ]],
   ["구성원 화면", "emp", [
-    ["profile", "내 역량 프로필"], ["training", "역량 진단·교육 추천"], ["career", "경력경로"],
+    ["profile", "내 역량 프로필"], ["training", "성장 로드맵"], ["career", "경력경로"],
   ]],
   ["공통", "all", [
     ["fairness", "공정성·신뢰센터"], ["about", "시스템 안내"],
@@ -80,12 +80,32 @@ export default function System() {
     toast("데이터를 초기 상태로 되돌렸습니다.");
   };
 
-  const results = useMemo(() => SEARCH_RESULTS.filter((r) => {
-    const e = empById(r.id);
-    if (fDept !== "전체" && e.dept !== fDept) return false;
-    if (fSkill !== "전체" && !e.skills.some(([s]) => s === fSkill)) return false;
-    return true;
-  }), [fDept, fSkill]);
+  // 필터는 전 구성원(16명)을 대상으로 동작한다.
+  // 프로젝트 요구조건과의 일치도가 사전 계산된 후보(SEARCH_RESULTS)는 그 값을 쓰고,
+  // 나머지는 요구역량 겹침 수로 규칙 기반 일치도를 즉석 계산한다.
+  const results = useMemo(() => {
+    const pre = Object.fromEntries(SEARCH_RESULTS.map((r) => [r.id, r]));
+    return EMPLOYEES
+      .filter((e) => {
+        if (fDept !== "전체" && e.dept !== fDept) return false;
+        if (fSkill !== "전체" && !e.skills.some(([s]) => s === fSkill)) return false;
+        return true;
+      })
+      .map((e) => {
+        if (pre[e.id]) return pre[e.id];
+        const matched = e.skills.filter(([s]) => PROJECT.required.includes(s)).map(([s]) => s);
+        const fit = Math.min(72, 34 + matched.length * 12);
+        return {
+          id: e.id, fit,
+          reason: matched.length
+            ? `요구역량 중 ${matched.join(", ")} 보유. 현재 프로젝트 기준 일치도는 낮은 편입니다.`
+            : "현재 프로젝트 요구역량과 직접 겹치는 스킬은 없습니다. 다른 프로젝트 기준으로 재검색할 수 있습니다.",
+          matched, missing: PROJECT.required.filter((r) => !matched.includes(r)),
+          similar: e.projects.slice(0, 1), wantMatch: false,
+        };
+      })
+      .sort((a, b) => b.fit - a.fit);
+  }, [fDept, fSkill]);
 
   return (
     <div className="tc">
@@ -137,7 +157,7 @@ export default function System() {
                      aiExcluded={aiExcluded} setAiExcluded={setAiExcluded}
                      requests={requests} setRequests={setRequests} toast={toast} />
           )}
-          {screen === "training" && <Training courseState={courseState} setCourseState={setCourseState} toast={toast} />}
+          {screen === "training" && <Training wantRole={wantRole} me={me} courseState={courseState} setCourseState={setCourseState} toast={toast} />}
           {screen === "career" && <Career pathSel={pathSel} setPathSel={setPathSel} toast={toast} />}
           {screen === "retention" && <Retention />}
           {screen === "fairness" && <Fairness toast={toast} />}
@@ -251,7 +271,7 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
               {["전체", "Java", "Spring Boot", "Python", "Oracle", "데이터 모델링", "머신러닝", "AWS", "Kubernetes", "React", "Figma", "UX 리서치", "테스트 자동화", "프로젝트 관리", "HR 데이터 분석", "B2B 영업", "콘텐츠 기획", "광고 운영"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
-          <button className="tc-btn primary" onClick={() => { setSearched(true); toast("규칙 기반 매칭으로 후보를 찾았습니다."); }}>검색</button>
+          <button className="tc-btn primary" onClick={() => { setSearched(true); toast(results.length ? `조건에 맞는 후보 ${results.length}명을 찾았습니다. (규칙 기반 매칭)` : "조건에 맞는 후보가 없습니다. 필터를 조정해 보세요."); }}>검색</button>
           <span className="muted tc-p" style={{ margin: 0 }}>그 외 필터: 숙련도 · 자격증 · 희망 직무 · 투입 가능 시점 · 경력연수</span>
         </div>
       </Card>
@@ -449,39 +469,118 @@ function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, s
   );
 }
 
-/* ═══════════ 화면 5. 교육 추천 ═══════════ */
-function Training({ courseState, setCourseState, toast }) {
-  const set = (c, s, msg) => { setCourseState((x) => ({ ...x, [c]: s })); toast(msg); };
+/* ═══════════ 화면 5. 성장 로드맵 (역량 격차 · 교육 추천) ═══════════ */
+function Training({ wantRole, me, courseState, setCourseState, toast }) {
+  const set = (c, st, msg) => { setCourseState((x) => ({ ...x, [c]: st })); toast(msg); };
+  const enrolled = GAPS.filter((g) => courseState[g.course] === "enrolled");
+  const totalHours = enrolled.reduce((a, g) => a + g.hours, 0);
+  // 준비도 = 현재 수준 합 / 목표 수준 합
+  const ready = Math.round(
+    (GAPS.reduce((a, g) => a + g.cur, 0) / GAPS.reduce((a, g) => a + g.target, 0)) * 100);
+  const strengths = me.skills.filter(([, lv]) => lv >= 4).map(([sk]) => sk);
+
   return (
     <>
-      <Card title="역량 격차 진단 · 목표 직무: AI·데이터 기반 서비스 개발자">
-        <p className="tc-p"><b>현재 강점</b>: Java, Spring Boot, Oracle, 공공 프로젝트 경험, 데이터 모델링</p>
-        {GAPS.map((g) => (
-          <div key={g.skill} className="tc-gaprow">
-            <div className="tc-gaphead">
-              <b>{g.skill}</b>
-              <span className="muted">현재 {g.cur} → 목표 {g.target} (차이 {g.target - g.cur})</span>
-            </div>
-            <div className="tc-gapbar">
-              <i style={{ width: `${(g.cur / 5) * 100}%` }} />
-              <em style={{ width: `${((g.target - g.cur) / 5) * 100}%`, left: `${(g.cur / 5) * 100}%` }} />
-            </div>
-            <p className="tc-p">{g.why} · 추천 교육 <b>{g.course}</b> (약 {g.hours}시간) · 완료 시 연결 가능: {g.link}</p>
-            <div className="tc-row">
-              {courseState[g.course] === "enrolled"
-                ? <span className="tc-badge mint">수강 신청 완료</span>
-                : courseState[g.course] === "dismissed"
-                  ? <span className="tc-badge">추천 숨김</span>
-                  : <>
-                      <button className="tc-btn tiny" onClick={() => set(g.course, "enrolled", `'${g.course}' 수강 신청이 접수되었습니다.`)}>교육 수강 신청</button>
-                      <button className="tc-btn tiny ghost" onClick={() => set(g.course, "dismissed", "이 추천을 숨겼습니다. 사유는 추천 개선에 사용됩니다.")}>관심 없음</button>
-                      <button className="tc-btn tiny ghost" onClick={() => toast("유사 교육 2건을 더 찾았습니다: AI 서비스 설계 프로젝트, 데이터 시각화 실무")}>다른 교육 보기</button>
-                    </>}
-            </div>
+      {/* 요약 헤더 */}
+      <section className="tc-goal">
+        <div className="tc-goal-main">
+          <div className="tc-goal-label">목표 직무 (내 프로필에서 설정한 값)</div>
+          <div className="tc-goal-role">{wantRole}</div>
+          <div className="tc-chips">
+            {strengths.map((sk) => <span key={sk} className="tc-chip">{sk}</span>)}
           </div>
-        ))}
-      </Card>
+          <p className="tc-p muted" style={{ marginBottom: 0 }}>
+            위는 현재 강점(숙련도 4 이상)입니다. 목표 직무를 바꾸면 아래 역량 격차와 추천 교육이 함께 바뀝니다.
+          </p>
+        </div>
+        <div className="tc-goal-side">
+          <Ring value={ready} label="목표 대비 준비도" />
+          <div className="tc-goal-stat">
+            <div><b>{GAPS.length}</b><span>보완 필요 역량</span></div>
+            <div><b>{enrolled.length}</b><span>신청한 교육</span></div>
+            <div><b>{totalHours}<em>h</em></b><span>예상 학습시간</span></div>
+          </div>
+        </div>
+      </section>
+
+      <div className="tc-sec-head">
+        <h3>보완이 필요한 역량 {GAPS.length}개</h3>
+        <span className="muted">우선순위는 목표 직무의 요구 수준과의 차이 순입니다.</span>
+      </div>
+
+      <div className="tc-gaps">
+        {GAPS.map((g, i) => {
+          const st = courseState[g.course];
+          return (
+            <article key={g.skill} className={`tc-gapcard${st === "enrolled" ? " on" : ""}${st === "dismissed" ? " off" : ""}`}>
+              <header className="tc-gapcard-head">
+                <div>
+                  <span className="tc-rank">{String(i + 1).padStart(2, "0")}</span>
+                  <b>{g.skill}</b>
+                </div>
+                {st === "enrolled" && <span className="tc-badge mint">신청 완료</span>}
+                {st === "dismissed" && <span className="tc-badge">숨김</span>}
+              </header>
+
+              <div className="tc-levels">
+                <span className="tc-lv-label">현재 {g.cur}</span>
+                <div className="tc-dots">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <i key={n} className={n <= g.cur ? "has" : n <= g.target ? "need" : ""} />
+                  ))}
+                </div>
+                <span className="tc-lv-label target">목표 {g.target}</span>
+              </div>
+
+              <p className="tc-p" style={{ margin: "10px 0 12px" }}>{g.why}</p>
+
+              <div className="tc-course">
+                <div className="tc-course-name">{g.course}</div>
+                <dl className="tc-dl">
+                  <div><dt>학습시간</dt><dd>약 {g.hours}시간</dd></div>
+                  <div><dt>완료 시</dt><dd>{g.link} 참여 가능</dd></div>
+                </dl>
+              </div>
+
+              <div className="tc-row wrap" style={{ marginTop: "auto", paddingTop: 12 }}>
+                {st ? (
+                  <button className="tc-btn tiny ghost"
+                          onClick={() => set(g.course, null, "선택을 취소했습니다.")}>되돌리기</button>
+                ) : (
+                  <>
+                    <button className="tc-btn tiny" onClick={() => set(g.course, "enrolled", `'${g.course}' 수강 신청이 접수되었습니다.`)}>수강 신청</button>
+                    <button className="tc-btn tiny ghost" onClick={() => set(g.course, "dismissed", "이 추천을 숨겼습니다. 사유는 추천 개선에 사용됩니다.")}>관심 없음</button>
+                    <button className="tc-btn tiny ghost" onClick={() => toast("유사 교육 2건: AI 서비스 설계 프로젝트, 데이터 시각화 실무")}>다른 교육</button>
+                  </>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <p className="tc-p muted">
+        교육 추천은 목표 직무의 요구 역량과 내 프로필의 현재 수준을 비교한 규칙 기반 결과입니다.
+        수강 여부는 본인이 선택하며, 신청·거절 이력은 인사평가에 사용되지 않습니다.
+      </p>
     </>
+  );
+}
+
+/* 준비도 링 (SVG) */
+function Ring({ value, label }) {
+  const R = 46, C = 2 * Math.PI * R;
+  return (
+    <div className="tc-ring">
+      <svg viewBox="0 0 120 120" width="112" height="112">
+        <circle cx="60" cy="60" r={R} fill="none" stroke="var(--grid)" strokeWidth="11" />
+        <circle cx="60" cy="60" r={R} fill="none" stroke="var(--brand)" strokeWidth="11"
+                strokeLinecap="round" strokeDasharray={`${(value / 100) * C} ${C}`}
+                transform="rotate(-90 60 60)" />
+        <text x="60" y="66" textAnchor="middle" fontSize="26" fontWeight="700" fill="var(--ink-1)">{value}%</text>
+      </svg>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -772,7 +871,56 @@ const CSS = `
 .tc-skillrow .tc-bar { flex: 1; min-width: 220px; margin: 0; }
 .tc-skill-actions { display: flex; gap: 8px; align-items: center; }
 
-.tc-gaprow { border-top: 1px solid var(--grid); padding: 12px 0 8px; }
+/* ── 성장 로드맵 ── */
+.tc-goal { display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch;
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
+.tc-goal-main { flex: 1; min-width: 280px; }
+.tc-goal-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); letter-spacing: 0.3px; }
+.tc-goal-role { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; margin: 4px 0 12px; color: var(--brand); }
+.tc-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.tc-chip { font-size: 12px; font-weight: 600; color: #1d6a58; background: rgba(46,139,118,0.12);
+  border-radius: 999px; padding: 4px 11px; }
+.tc-goal-side { display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+  border-left: 1px solid var(--border); padding-left: 24px; }
+@media (max-width: 900px) { .tc-goal-side { border-left: 0; padding-left: 0; } }
+.tc-ring { text-align: center; }
+.tc-ring span { display: block; font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; }
+.tc-goal-stat { display: grid; gap: 10px; }
+.tc-goal-stat b { font-size: 20px; letter-spacing: -0.5px; }
+.tc-goal-stat b em { font-style: normal; font-size: 13px; }
+.tc-goal-stat span { display: block; font-size: 11.5px; color: var(--ink-muted); }
+
+.tc-sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.tc-sec-head h3 { margin: 0; font-size: 15px; }
+.tc-sec-head span { font-size: 12.5px; }
+
+.tc-gaps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 1180px) { .tc-gaps { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) { .tc-gaps { grid-template-columns: 1fr; } }
+.tc-gapcard { display: flex; flex-direction: column; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
+  transition: border-color 0.25s, box-shadow 0.25s; }
+.tc-gapcard:hover { border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+  box-shadow: 0 14px 30px -22px rgba(18,32,58,0.4); }
+.tc-gapcard.on { border-color: rgba(46,139,118,0.5); background: rgba(46,139,118,0.04); }
+.tc-gapcard.off { opacity: 0.55; }
+.tc-gapcard-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tc-gapcard-head b { font-size: 15px; letter-spacing: -0.3px; }
+.tc-rank { font-size: 11px; font-weight: 800; color: var(--brand-soft); margin-right: 8px; }
+
+.tc-levels { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.tc-lv-label { font-size: 11.5px; color: var(--ink-muted); white-space: nowrap; }
+.tc-lv-label.target { color: var(--brand); font-weight: 700; }
+.tc-dots { display: flex; gap: 4px; flex: 1; }
+.tc-dots i { flex: 1; height: 8px; border-radius: 99px; background: var(--grid); }
+.tc-dots i.has { background: var(--brand); }
+.tc-dots i.need { background: repeating-linear-gradient(45deg,
+  rgba(46,139,118,0.55) 0 4px, rgba(46,139,118,0.2) 4px 8px); }
+
+.tc-course { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; }
+.tc-course-name { font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+.tc-course .tc-dl > div { font-size: 12.5px; padding: 1px 0; }
+.tc-course .tc-dl dt { width: 62px; }
 .tc-gaphead { display: flex; justify-content: space-between; font-size: 13.5px; }
 .tc-gapbar { position: relative; height: 10px; background: var(--grid); border-radius: 99px; margin: 8px 0 2px; overflow: hidden; }
 .tc-gapbar i { position: absolute; inset: 0 auto 0 0; background: var(--seq-550); border-radius: 99px; }
