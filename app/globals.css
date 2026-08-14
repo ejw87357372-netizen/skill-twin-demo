@@ -97,7 +97,11 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-inner { display: flex; align-items: center; gap: 20px; min-height: 56px; flex-wrap: wrap; padding: 6px 0; }
 .nav-logo { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
-.nav-logo span { color: var(--brand); }
+.nav-logo span {
+  color: var(--brand);
+  font-family: "VanillaRavioli", "Pretendard Variable", sans-serif;
+  font-weight: 400; font-size: 19px; letter-spacing: 0.3px;
+}
 .nav-links { display: flex; gap: 2px; margin-left: auto; }
 .nav-links a {
   padding: 6px 9px; border-radius: 8px; font-size: 13.5px; color: var(--ink-2);
