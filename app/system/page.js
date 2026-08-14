@@ -6,15 +6,29 @@
 import { useMemo, useState } from "react";
 import {
   EMPLOYEES, PROJECT, SEARCH_RESULTS, TEAM_INIT, ALTERNATES,
-  GAPS, PATHS, RETENTION, SURVEY_ITEMS, DEMO_STEPS, empById,
+  GAPS, PATHS, RETENTION, DEMO_STEPS, empById,
 } from "@/lib/tcData";
 
-const MENUS = [
-  ["dash", "통합 대시보드"], ["search", "AI 인재 탐색"], ["matching", "프로젝트 매칭"],
-  ["profile", "역량 진단"], ["training", "교육 추천"], ["career", "경력경로"],
-  ["retention", "인재 유지관리"], ["fairness", "공정성·신뢰센터"],
-  ["survey", "직원 수용성 진단"], ["about", "시스템 안내"],
+// 화면 관점 구분: admin = 인사담당자, emp = 직원 본인, all = 전 구성원 공통
+const MENU_GROUPS = [
+  ["관리자 화면", "admin", [
+    ["dash", "통합 대시보드"], ["search", "AI 인재 탐색"],
+    ["matching", "프로젝트 매칭"], ["retention", "인재 유지관리"],
+  ]],
+  ["직원 화면", "emp", [
+    ["profile", "내 역량 프로필"], ["training", "역량 진단·교육 추천"], ["career", "경력경로"],
+  ]],
+  ["공통", "all", [
+    ["fairness", "공정성·신뢰센터"], ["about", "시스템 안내"],
+  ]],
 ];
+const AUD = { dash: "admin", search: "admin", matching: "admin", retention: "admin",
+  profile: "emp", training: "emp", career: "emp", fairness: "all", about: "all" };
+const AUD_LABEL = {
+  admin: "지금 보는 화면: 관리자(인사담당자) 관점",
+  emp: "지금 보는 화면: 직원 본인 관점",
+  all: "지금 보는 화면: 전 구성원 공통",
+};
 
 const CHECKS = [
   "직원에게 추천 사실을 안내했는가?",
@@ -58,10 +72,6 @@ export default function System() {
   const [courseState, setCourseState] = useState({});
   const [pathSel, setPathSel] = useState(null);
 
-  // 수용성 설문
-  const [answers, setAnswers] = useState({});
-  const [result, setResult] = useState(null);
-
   // 시연 시나리오
   const [demoOn, setDemoOn] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
@@ -71,7 +81,7 @@ export default function System() {
     setScreen("dash"); setSearched(false); setWhy(null); setFDept("전체"); setFSkill("전체");
     setTeam(TEAM_INIT); setConfirmed({}); setChecks(CHECKS.map(() => false)); setPlaced(false);
     setWantRole(me.wantRole); setRecvRec(true); setAiExcluded({}); setRequests([]);
-    setCourseState({}); setPathSel(null); setAnswers({}); setResult(null);
+    setCourseState({}); setPathSel(null);
     setDemoOn(false); setDemoStep(0);
     toast("시연 데이터를 초기 상태로 되돌렸습니다.");
   };
@@ -87,19 +97,6 @@ export default function System() {
     if (fSkill !== "전체" && !e.skills.some(([s]) => s === fSkill)) return false;
     return true;
   }), [fDept, fSkill]);
-
-  const submitSurvey = () => {
-    if (Object.keys(answers).length < SURVEY_ITEMS.length) { toast("아직 응답하지 않은 문항이 있습니다."); return; }
-    const pos = SURVEY_ITEMS.filter((i) => !i.negative).map((i) => answers[i.k]);
-    const pc = answers["PC"];
-    const mean = pos.reduce((a, b) => a + b, 0) / pos.length;
-    const total = Math.round(((mean - 1) / 4) * 100);
-    const byItem = SURVEY_ITEMS.map((i) => ({ ...i, v: answers[i.k], rank: i.negative ? answers[i.k] : 6 - answers[i.k] }));
-    const top = [...byItem].filter((i) => !i.negative).sort((a, b) => b.v - a.v)[0];
-    const low = [...byItem].sort((a, b) => b.rank - a.rank)[0];
-    setResult({ total, pc, top, low });
-    toast("진단 결과가 생성되었습니다. (데모용 예시 데이터)");
-  };
 
   return (
     <div className="tc">
@@ -129,11 +126,16 @@ export default function System() {
       <div className="tc-body">
         {/* ── 사이드바 ── */}
         <nav className="tc-side">
-          {MENUS.map(([k, label], i) => (
-            <button key={k} className={screen === k ? "on" : ""} onClick={() => setScreen(k)}>
-              <span className="no">{String(i + 1).padStart(2, "0")}</span>{label}
-            </button>
-          ))}
+          {(() => { let n = 0; return MENU_GROUPS.map(([gLabel, gAud, items]) => (
+            <div key={gLabel} className="tc-side-group">
+              <div className={`tc-side-label ${gAud}`}>{gLabel}</div>
+              {items.map(([k, label]) => { n += 1; return (
+                <button key={k} className={screen === k ? "on" : ""} onClick={() => setScreen(k)}>
+                  <span className="no">{String(n).padStart(2, "0")}</span>{label}
+                </button>
+              ); })}
+            </div>
+          )); })()}
           <div className="tc-side-note">
             본 데모의 모든 인물·수치는 가상이며, 추천은 규칙 기반으로 생성된 예시입니다. 실제 AI를 호출하지 않습니다.
           </div>
@@ -141,6 +143,7 @@ export default function System() {
 
         {/* ── 콘텐츠 ── */}
         <main className="tc-main">
+          <div className={`tc-aud ${AUD[screen]}`}>{AUD_LABEL[AUD[screen]]}</div>
           {screen === "dash" && <Dash />}
           {screen === "search" && (
             <Search searched={searched} setSearched={setSearched} results={results}
@@ -162,23 +165,20 @@ export default function System() {
           {screen === "career" && <Career pathSel={pathSel} setPathSel={setPathSel} toast={toast} />}
           {screen === "retention" && <Retention />}
           {screen === "fairness" && <Fairness toast={toast} />}
-          {screen === "survey" && (
-            <Survey answers={answers} setAnswers={setAnswers} result={result} submit={submitSurvey} />
-          )}
           {screen === "about" && <About />}
         </main>
       </div>
 
       {/* ── 추천 근거 모달 ── */}
       {why && (
-        <Modal onClose={() => setWhy(null)} title={`추천 근거 — ${empById(why.id).name}`}>
+        <Modal onClose={() => setWhy(null)} title={`추천 근거 · ${empById(why.id).name}`}>
           <WhyBody r={why} />
         </Modal>
       )}
 
       {/* ── 제외 사유 모달 ── */}
       {excludeTarget && (
-        <Modal onClose={() => setExcludeTarget(null)} title={`후보 제외 — ${empById(excludeTarget.id).name} (${excludeTarget.slot})`}>
+        <Modal onClose={() => setExcludeTarget(null)} title={`후보 제외 · ${empById(excludeTarget.id).name} (${excludeTarget.slot})`}>
           <p className="tc-p">제외 사유를 남기면 공정성 센터의 추천 이력에 기록됩니다.</p>
           <textarea className="tc-input" rows={3} value={excludeReason}
                     onChange={(e) => setExcludeReason(e.target.value)}
@@ -188,9 +188,9 @@ export default function System() {
             <button className="tc-btn primary" disabled={!excludeReason.trim()} onClick={() => {
               const alt = ALTERNATES[excludeTarget.slot];
               setTeam((t) => t.map((m) => m === excludeTarget
-                ? { ...m, id: alt, why: "대체 후보 — 규칙 기반 재추천", gap: "요구역량 재검토 필요", replaced: true }
+                ? { ...m, id: alt, why: "대체 후보(규칙 기반 재추천)", gap: "요구역량 재검토 필요", replaced: true }
                 : m));
-              toast(`${empById(excludeTarget.id).name} 제외 — 사유가 기록되고 대체 후보를 추천했습니다.`);
+              toast(`${empById(excludeTarget.id).name} 제외: 사유가 기록되고 대체 후보를 추천했습니다.`);
               setExcludeTarget(null); setExcludeReason("");
             }}>제외하고 다른 후보 추천</button>
           </div>
@@ -227,8 +227,8 @@ function Dash() {
     ["82%", "역량정보 업데이트율"], ["71%", "교육 추천 수락률"], ["156", "경력경로 설정 직원"],
     ["12", "추가 검토 필요(이탈위험)", "warn"],
   ];
-  const dept = [["플랫폼개발", 62], ["디지털서비스", 48], ["데이터", 34], ["AI연구", 22], ["인프라", 28], ["기획·PMO", 31], ["기타", 23]];
-  const skills = [["Java·Spring", 71], ["데이터 분석", 43], ["클라우드", 38], ["AI 활용", 26], ["기획·PM", 41]];
+  const dept = [["플랫폼·디지털서비스", 58], ["영업·마케팅", 38], ["경영지원(인사·재무)", 30], ["데이터·AI", 34], ["인프라·정보보안", 27], ["디자인·서비스기획", 25], ["품질·고객지원", 21], ["기획·PMO", 15]];
+  const skills = [["Java·Spring", 58], ["데이터 분석", 41], ["프로젝트 관리", 39], ["클라우드·인프라", 34], ["AI·머신러닝", 24], ["디자인·UX", 19], ["정보보안", 15]];
   const demands = [["차세대 데이터 플랫폼", "6명", "9월"], ["AI 민원 안내 고도화", "4명", "10월"], ["레거시 전환 2차", "8명", "11월"]];
   const recents = [
     ["프로젝트 매칭", "차세대 데이터 플랫폼 후보 6명 추천", "담당자 검토 중"],
@@ -287,12 +287,12 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
         <div className="tc-filters">
           <label>부서
             <select value={fDept} onChange={(e) => setFDept(e.target.value)}>
-              {["전체", "디지털서비스팀", "플랫폼개발팀", "데이터팀", "AI연구팀", "PMO", "서비스기획팀"].map((d) => <option key={d}>{d}</option>)}
+              {["전체", "경영기획실", "인사팀", "재무회계팀", "영업본부", "마케팅팀", "디자인팀", "서비스기획팀", "디지털서비스팀", "플랫폼개발팀", "데이터팀", "AI연구팀", "인프라팀", "정보보안팀", "품질관리팀", "PMO", "고객지원팀"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
           <label>보유 기술
             <select value={fSkill} onChange={(e) => setFSkill(e.target.value)}>
-              {["전체", "Java", "Spring Boot", "Oracle", "데이터 모델링", "Python", "머신러닝"].map((d) => <option key={d}>{d}</option>)}
+              {["전체", "Java", "Spring Boot", "Python", "Oracle", "데이터 모델링", "머신러닝", "AWS", "Kubernetes", "React", "Figma", "UX 리서치", "테스트 자동화", "프로젝트 관리", "HR 데이터 분석", "B2B 영업", "콘텐츠 기획", "광고 운영"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
           <span className="muted tc-p" style={{ margin: 0 }}>그 외 필터: 숙련도 · 자격증 · 희망 직무 · 투입 가능 시점 · 경력연수</span>
@@ -340,10 +340,10 @@ function WhyBody({ r }) {
   return (
     <>
       <dl className="tc-why">
-        <dt>요구역량과 일치</dt><dd>{r.matched.join(", ") || "—"}</dd>
+        <dt>요구역량과 일치</dt><dd>{r.matched.join(", ") || "없음"}</dd>
         <dt>부족한 역량</dt><dd>{r.missing.join(", ") || "없음"}</dd>
         <dt>유사 프로젝트 경험</dt><dd>{r.similar.join(", ")}</dd>
-        <dt>희망 직무 일치</dt><dd>{r.wantMatch ? `일치 — 본인 희망: ${e.wantRole}` : "부분 일치"}</dd>
+        <dt>희망 직무 일치</dt><dd>{r.wantMatch ? `일치 (본인 희망: ${e.wantRole})` : "부분 일치"}</dd>
         <dt>데이터 기준일</dt><dd>{e.updated}</dd>
         <dt>AI가 사용하지 않은 정보</dt>
         <dd>성별, 연령, 출신지역, 출신학교, 가족관계 등 직무와 직접 관련 없는 정보는 추천에 사용하지 않았습니다.</dd>
@@ -360,7 +360,7 @@ function Matching({ team, setTeam, confirmed, setConfirmed, setExcludeTarget, ch
   const allChecked = checks.every(Boolean);
   return (
     <>
-      <Card title={`프로젝트 — ${PROJECT.name}`}>
+      <Card title={`프로젝트: ${PROJECT.name}`}>
         <dl className="tc-dl wide">
           <div><dt>기간</dt><dd>{PROJECT.period}</dd></div>
           <div><dt>필요 인원</dt><dd>{PROJECT.headcount}명</dd></div>
@@ -404,7 +404,7 @@ function Matching({ team, setTeam, confirmed, setConfirmed, setExcludeTarget, ch
         ))}
         <div className="tc-row-end">
           {placed
-            ? <span className="tc-badge mint big">최종 검토 완료 — 배치안이 인사 담당자에게 전달되었습니다</span>
+            ? <span className="tc-badge mint big">최종 검토 완료: 배치안이 인사 담당자에게 전달되었습니다</span>
             : <button className="tc-btn primary" disabled={!allChecked}
                       onClick={() => { setPlaced(true); toast("공정성 점검을 통과했습니다. 최종 결정은 담당자 검토로 확정됩니다."); }}>
                 관리자 최종검토 요청
@@ -426,11 +426,11 @@ function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, s
   };
   return (
     <>
-      <Notice>이 화면은 직원 본인(가상 인물 김서연)의 관점입니다. AI가 추론한 정보와 직접 입력한 정보를 구분해서 보여주고, 본인이 수정·이의제기·분석 제외를 요청할 수 있습니다.</Notice>
+      <Notice>AI가 추론한 정보와 내가 직접 입력한 정보를 구분해서 보여주고, 잘못된 정보는 수정 요청·이의제기·분석 제외를 할 수 있습니다.</Notice>
       <div className="tc-grid2">
         <Card title="기본 정보">
           <dl className="tc-dl wide">
-            <div><dt>이름</dt><dd>{me.name} (가상)</dd></div>
+            <div><dt>이름</dt><dd>데모 직원 계정 (가상)</dd></div>
             <div><dt>직무</dt><dd>{me.role} · {me.years}년</dd></div>
             <div><dt>소속</dt><dd>{me.dept}</dd></div>
             <div><dt>희망 직무</dt>
@@ -497,8 +497,8 @@ function Training({ courseState, setCourseState, toast }) {
   const set = (c, s, msg) => { setCourseState((x) => ({ ...x, [c]: s })); toast(msg); };
   return (
     <>
-      <Card title="역량 격차 진단 — 목표 직무: AI·데이터 기반 서비스 개발자 (김서연)">
-        <p className="tc-p"><b>현재 강점</b> — Java, Spring Boot, Oracle, 공공 프로젝트 경험, 데이터 모델링</p>
+      <Card title="역량 격차 진단 · 목표 직무: AI·데이터 기반 서비스 개발자">
+        <p className="tc-p"><b>현재 강점</b>: Java, Spring Boot, Oracle, 공공 프로젝트 경험, 데이터 모델링</p>
         {GAPS.map((g) => (
           <div key={g.skill} className="tc-gaprow">
             <div className="tc-gaphead">
@@ -553,7 +553,7 @@ function Career({ pathSel, setPathSel, toast }) {
             </dl>
             <button className={`tc-btn ${pathSel === p.key ? "" : "primary"}`}
                     onClick={() => { setPathSel(p.key); toast(`경로 ${p.key}를 나의 경력 목표로 설정했습니다. 언제든 변경할 수 있습니다.`); }}>
-              {pathSel === p.key ? "선택됨 — 변경 가능" : "이 경로 선택"}
+              {pathSel === p.key ? "선택됨 (변경 가능)" : "이 경로 선택"}
             </button>
           </div>
         ))}
@@ -577,7 +577,7 @@ function Retention() {
               return (
                 <tr key={r.id}>
                   <td><b>{e.name}</b><div className="muted small">{e.role} · {e.dept}</div></td>
-                  <td>{e.signals.join(" · ") || "—"}</td>
+                  <td>{e.signals.join(" · ") || "없음"}</td>
                   <td><span className="tc-badge orange">{r.status}</span></td>
                   <td>{r.support}</td>
                 </tr>
@@ -602,7 +602,7 @@ function Fairness({ toast }) {
       <div className="tc-grid2">
         <Card title="신뢰 지표">
           {metrics.map(([n, v]) => <Bar key={n} label={n} v={v} max={100} suffix="%" tone={v < 80 ? "orange" : "mint"} />)}
-          <p className="tc-p muted">프로젝트 추천 기회 분포: 상위 20% 직원에게 추천의 34%가 집중 — 아래 점검 결과 참조.</p>
+          <p className="tc-p muted">프로젝트 추천 기회 분포: 상위 20% 직원에게 추천의 34%가 집중되어 있습니다. 아래 점검 결과를 참조하세요.</p>
         </Card>
         <Card title="추천 결과 편향 점검" tone="warn">
           <p className="tc-p"><span className="tc-badge orange big">전체 상태: 주의 필요</span></p>
@@ -611,11 +611,11 @@ function Fairness({ toast }) {
             <li>일부 직원의 역량정보가 오래되어 추천 정확도 저하 가능</li>
             <li>교육 참여 이력이 많은 직원에게 추천이 집중될 가능성</li>
           </ul>
-          <p className="tc-p"><b>개선조치</b> — 정보 업데이트 요청 발송, 추천 기준 재검토, 관리자 교차검토 시행</p>
+          <p className="tc-p"><b>개선조치</b>: 정보 업데이트 요청 발송, 추천 기준 재검토, 관리자 교차검토 시행</p>
         </Card>
         <Card title="AI 추천에 사용되는 데이터">
           <p className="tc-p">보유 기술·숙련도, 프로젝트 경험, 자격증, 교육 이력, 본인이 등록한 희망 직무·희망 프로젝트, 투입 가능 시점</p>
-          <p className="tc-p"><b>사용하지 않는 민감정보</b> — 성별, 연령, 출신지역, 출신학교, 가족관계, 노조 가입 여부, 건강 정보, 평가·근태 기록</p>
+          <p className="tc-p"><b>사용하지 않는 민감정보</b>: 성별, 연령, 출신지역, 출신학교, 가족관계, 노조 가입 여부, 건강 정보, 평가·근태 기록</p>
           <p className="tc-p muted">추천 기준: 프로젝트 요구조건과 등록된 역량정보의 일치 정도(규칙 기반). 데이터 보유기간: 퇴직 후 3년, 이후 파기.</p>
         </Card>
         <Card title="직원의 권리">
@@ -627,45 +627,6 @@ function Fairness({ toast }) {
           <p className="tc-p muted">모든 추천은 인간의 최종검토를 거치며, 이의제기 시 재검토 절차가 진행됩니다.</p>
         </Card>
       </div>
-    </>
-  );
-}
-
-/* ═══════════ 화면 9. 직원 수용성 진단 ═══════════ */
-function Survey({ answers, setAnswers, result, submit }) {
-  return (
-    <>
-      <Notice>학술연구(확장 UTAUT 모형)와 데모를 연결하는 화면입니다. 결과는 실제 연구 데이터가 아닌 데모용 예시입니다.</Notice>
-      <Card title="도입 전 구성원 수용성 진단 (5점 척도)">
-        {SURVEY_ITEMS.map((it, i) => (
-          <div key={it.k} className="tc-qrow">
-            <div className="tc-qtext"><span className="tc-badge">{it.label}</span> {i + 1}. {it.text}</div>
-            <div className="tc-scale">
-              {[1, 2, 3, 4, 5].map((v) => (
-                <label key={v} className={answers[it.k] === v ? "on" : ""}>
-                  <input type="radio" name={it.k} checked={answers[it.k] === v}
-                         onChange={() => setAnswers((a) => ({ ...a, [it.k]: v }))} />{v}
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-        <div className="tc-row-end">
-          <button className="tc-btn primary" onClick={submit}>진단 결과 보기</button>
-        </div>
-      </Card>
-      {result && (
-        <Card title="진단 결과 (데모용 예시 데이터)" tone="mint">
-          <div className="tc-kpis">
-            <div className="tc-kpi"><b>{result.total}점</b><span>전체 수용도 (100점 환산)</span></div>
-            <div className="tc-kpi"><b>{result.top.label}</b><span>가장 높은 기대요인</span></div>
-            <div className="tc-kpi warn"><b>{result.low.label}</b><span>가장 큰 저항요인</span></div>
-          </div>
-          <p className="tc-p"><b>긍정요인</b> — {result.top.label}({result.top.v}점): 추천 근거 확인과 경력개발 효용에 대한 기대가 수용을 견인합니다.</p>
-          <p className="tc-p"><b>우려요인</b> — {result.low.label}: {result.low.negative ? `개인정보 활용 우려가 ${result.pc}점으로 확인되었습니다.` : "상대적으로 낮은 기대가 확인되었습니다."}</p>
-          <p className="tc-p"><b>도입 전 필요한 개선사항</b> — 추천 근거 설명 기본 제공, 데이터 활용 범위 사전 공개, 정보 수정·이의제기 절차 안내, 관리자 최종검토 원칙의 명문화</p>
-        </Card>
-      )}
     </>
   );
 }
@@ -754,10 +715,20 @@ const CSS = `
 .tc-side button.on { background: color-mix(in srgb, var(--brand) 9%, var(--surface-1));
   color: var(--ink-1); font-weight: 700; }
 .tc-side button.on .no { color: var(--brand); }
+.tc-side-group { margin-bottom: 10px; }
+.tc-side-label { font-size: 10.5px; font-weight: 800; letter-spacing: 0.6px; padding: 8px 12px 4px; }
+.tc-side-label.admin { color: var(--brand); }
+.tc-side-label.emp { color: #1d6a58; }
+.tc-side-label.all { color: var(--ink-muted); }
 .tc-side-note { margin-top: auto; font-size: 11.5px; color: var(--ink-muted); line-height: 1.5;
   padding: 12px; background: var(--surface-2); border-radius: 10px; }
 
-.tc-main { flex: 1; min-width: 0; padding: 22px 26px 60px; display: flex; flex-direction: column; gap: 16px; }
+.tc-aud { align-self: flex-start; font-size: 12.5px; font-weight: 800; letter-spacing: 0.2px;
+  border-radius: 999px; padding: 6px 16px; }
+.tc-aud.admin { background: var(--brand); color: #fff; }
+.tc-aud.emp { background: #2e8b76; color: #fff; }
+.tc-aud.all { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--border); }
+.tc-main { flex: 1; min-width: 0; padding: 16px 26px 60px; display: flex; flex-direction: column; gap: 16px; }
 
 .tc-notice { font-size: 13px; color: var(--ink-2); background: color-mix(in srgb, var(--brand) 7%, var(--surface-1));
   border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent); border-radius: 12px; padding: 11px 16px; }
