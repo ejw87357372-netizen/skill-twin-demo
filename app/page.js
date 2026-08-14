@@ -9,11 +9,11 @@ import HeroMark from "@/components/HeroMark";
 // status: "done" 완료 · "now" 진행 중 · "todo" 예정 — 단계가 바뀌면 여기만 고치면 된다
 const PROCESS = [
   ["01", "문헌 검토", "UTAUT·프라이버시·알고리즘 공정성 선행연구", "done"],
-  ["02", "설문 설계", "확장 모형 6요인 + 수용 의도, 24문항 확정", "done"],
-  ["03", "프로토타입", "수용성·스킬 진단 도구 구현", "done"],
-  ["04", "예비 점검", "본조사 초기 응답으로 문항 이해도 확인", "now"],
-  ["05", "본조사", "국내 재직자 대상, 목표 150명", "now"],
-  ["06", "분석", "신뢰도·타당도 검토 후 위계적 회귀", "todo"],
+  ["02", "프로토타입", "수용성·스킬 진단 웹 도구 구현", "done"],
+  ["03", "기업 사례 분석", "AI 인재관리 도입 전후 비교, 국내 핵심 인재 이동 사례", "now"],
+  ["04", "심층 인터뷰", "AI 교육·인사 담당자 대상 질적 조사", "todo"],
+  ["05", "설문조사", "도입 전 구성원 수용 요인, 목표 150명", "now"],
+  ["06", "분석·제언", "위계적 회귀 후 시스템 구축 방향 도출", "todo"],
 ];
 
 const FEATURES = [
@@ -45,8 +45,8 @@ export default function Home() {
           <h1 className="hero-en">People leave.<br /><span className="grad">Skills weave.</span></h1>
           <div className="hero-sub-ko">조직의 스킬을 실시간으로 읽는다</div>
           <p className="lede">
-            스킬 온톨로지로 인력 공백을 예측하는 시스템을 만들었습니다.<br />
-            이제 남은 질문은, 사람들이 이 지도를 신뢰하는가입니다.
+            AI 기반 인재관리 시스템의 프로토타입을 만들었습니다.<br />
+            이제 남은 질문은, 구성원이 이 시스템을 받아들이는가입니다.
           </p>
           <div className="cta-row">
             <div className="cta-group">
@@ -103,7 +103,7 @@ export default function Home() {
         <div className="section-head">
           <div className="eyebrow">Research Process</div>
           <h2>연구는 여섯 단계로 진행됩니다</h2>
-          <p>지금은 조사 단계입니다. 초기 응답으로 문항 이해도를 점검하며 본조사를 함께 진행하고, 조사가 끝나면 실제 분석값으로 결과를 갱신합니다.</p>
+          <p>지금은 기업 사례 분석과 설문조사를 병행하는 단계입니다. 조사가 끝나면 분석 결과를 바탕으로 시스템 구축 방향을 제시합니다.</p>
         </div>
         <div className="process">
           {PROCESS.map(([no, title, desc, status]) => (
@@ -125,7 +125,7 @@ export default function Home() {
           <div className="eyebrow">Skill Ontology</div>
           <h2>스킬은 서로 연결되어 있다</h2>
           <p style={{ maxWidth: "none" }}>
-            직무군–직무–과업–스킬 계층과 스킬 간 관계를 구조화했습니다.<br />
+            AI 인재관리 시스템의 데이터 기반이 되는 직무군–직무–과업–스킬 계층을 구조화했습니다.<br />
             배치는 연결 구조가 스스로 만든 것이고, 노드 크기는 연결 수에 비례합니다.<br />
             가장 큰 노드가 곧 이 조직에서 전이 가능성이 가장 높은 스킬입니다.
           </p>
