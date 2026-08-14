@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
+        {/* Space Grotesk(영문 디스플레이)는 public/fonts에서 자체 서빙 — globals.css @font-face */}
       </head>
       <body>
         <Nav />

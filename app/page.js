@@ -1,7 +1,30 @@
 import Link from "next/link";
 import { SKILLS, SKILL_EDGES, EMPLOYEES, TEAMS, PROJECTS, teamSkillMatrix, skillName } from "@/lib/data";
+import { QUESTIONS } from "@/lib/survey";
+import { TARGET_ROLES } from "@/lib/skillcheck";
 import { OntologyGraph, Heatmap, HBarChart } from "@/components/charts";
 import Reveal from "@/components/Reveal";
+import HeroMark from "@/components/HeroMark";
+
+// status: "done" 완료 · "now" 진행 중 · "todo" 예정 — 단계가 바뀌면 여기만 고치면 된다
+const PROCESS = [
+  ["01", "문헌 검토", "UTAUT·프라이버시·알고리즘 공정성 선행연구", "done"],
+  ["02", "설문 설계", "확장 모형 6요인 + 수용 의도, 24문항 확정", "done"],
+  ["03", "프로토타입", "수용성·스킬 진단 도구 구현", "done"],
+  ["04", "예비 점검", "본조사 초기 응답으로 문항 이해도 확인", "now"],
+  ["05", "본조사", "국내 재직자 대상, 목표 150명", "now"],
+  ["06", "분석", "신뢰도·타당도 검토 후 위계적 회귀", "todo"],
+];
+
+const FEATURES = [
+  { kicker: "직원 관점", title: "수용성 진단", href: "/survey",
+    desc: "확장 UTAUT 24문항에 답하면 수용 의도와 6개 요인 프로필, 가장 큰 저해 요인에 대한 개선 권고를 즉시 돌려줍니다." },
+  { kicker: "직원 관점", title: "스킬 진단", href: "/skill-check",
+    desc: "희망 직무를 고르고 보유 스킬을 입력하면 과업별 충족도, 부족 스킬과 추천 교육, 목표까지의 경력 경로를 제시합니다." },
+  { kicker: "HR 관점", title: "조직 대시보드", href: "/dashboard",
+    desc: "팀×스킬 히트맵으로 현황을 읽고, 한 명에게만 있는 스킬을 자동 탐지합니다. 퇴사 영향과 12개월 인력 전망도 계산합니다.",
+    sub: [["인재 프로필", "/people"], ["시뮬레이션", "/simulation"], ["스킬 갭 분석", "/gap"]] },
+];
 
 export default function Home() {
   const matrix = teamSkillMatrix();
@@ -9,33 +32,50 @@ export default function Home() {
   return (
     <>
       {/* ── 히어로 ── */}
-      <section className="hero-wash">
-        <span className="tag">학술연구 데모 · 가상 데이터</span>
-        <h1>
-          조직의 스킬을<br />실시간으로 읽는다
-        </h1>
-        <p className="lede">
-          스킬 데이터를 온톨로지로 엮어 인력 공백을 예측하고 선제 알림을 제공합니다.
-          공장의 디지털 트윈이 설비를 읽듯, Weave는 조직의 역량을 읽습니다.
-        </p>
-        <div className="cta-row">
-          <div className="cta-group">
-            <span className="cta-group-label">인사담당자·경영진</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link href="/dashboard" className="btn btn-pill">조직 대시보드</Link>
-              <Link href="/simulation" className="btn btn-ghost btn-pill">시뮬레이션</Link>
+      <section className="hero-light">
+        <div className="aurora"><i /><i /><i /></div>
+        <div className="grain" />
+        <div className="hero-inner">
+          <div className="trust-row">
+            <span className="trust"><i />성균관대 AI융합운영전공 학술연구</span>
+            <span className="trust"><i />확장 UTAUT 모형</span>
+            <span className="trust"><i />공식 통계 기반 · 가상 데이터 시연</span>
+          </div>
+          <div className="hero-logo"><HeroMark /></div>
+          <h1 className="hero-en">People leave.<br /><span className="grad">Skills weave.</span></h1>
+          <div className="hero-sub-ko">조직의 스킬을 실시간으로 읽는다</div>
+          <p className="lede">
+            스킬 온톨로지로 인력 공백을 예측하는 시스템을 만들었습니다.<br />
+            이제 남은 질문은, 사람들이 이 지도를 신뢰하는가입니다.
+          </p>
+          <div className="cta-row">
+            <div className="cta-group">
+              <span className="cta-group-label">직원</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Link href="/survey" className="btn btn-pill">수용성 진단</Link>
+                <Link href="/skill-check" className="btn btn-ghost btn-pill">스킬 진단</Link>
+              </div>
+            </div>
+            <div className="cta-group">
+              <span className="cta-group-label">인사담당자</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <Link href="/dashboard" className="btn btn-ghost btn-pill">조직 대시보드</Link>
+                <Link href="/gap" className="btn btn-ghost btn-pill">스킬 갭 분석</Link>
+              </div>
             </div>
           </div>
-          <div className="cta-group">
-            <span className="cta-group-label">직원</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Link href="/skill-check" className="btn btn-pill">스킬 진단</Link>
-              <Link href="/survey" className="btn btn-ghost btn-pill">수용성 진단</Link>
-            </div>
+
+          <div className="stat-strip on-light">
+            <div><div className="big">{QUESTIONS.length}<em>문항</em></div><div className="cap">확장 UTAUT 측정도구</div></div>
+            <div><div className="big">6<em>요인</em></div><div className="cap">+ 종속변수 수용 의도</div></div>
+            <div><div className="big">150<em>명</em></div><div className="cap">본조사 목표 표본</div></div>
+            <div><div className="big">{SKILLS.length}<em>개</em></div><div className="cap">온톨로지 스킬 노드</div></div>
           </div>
         </div>
+      </section>
 
-        {/* 브라우저 프레임 안의 미리보기 */}
+      {/* 패널 경계를 가로지르는 제품 화면 */}
+      <div className="hero-shot-wrap">
         <Reveal>
           <div className="hero-shot">
             <div className="hero-shot-bar">
@@ -44,10 +84,8 @@ export default function Home() {
             </div>
             <div className="hero-shot-body" style={{ textAlign: "left" }}>
               <div className="grid grid-4" style={{ marginBottom: 16 }}>
-                {[
-                  [EMPLOYEES.length, "가상 직원"], [TEAMS.length, "팀"],
-                  [SKILLS.length, "스킬 노드"], [PROJECTS.length, "진행 프로젝트"],
-                ].map(([v, label]) => (
+                {[[EMPLOYEES.length, "가상 직원"], [TEAMS.length, "팀"],
+                  [TARGET_ROLES.length, "직무"], [PROJECTS.length, "진행 프로젝트"]].map(([v, label]) => (
                   <div key={label}>
                     <div className="stat-value num">{v}</div>
                     <div className="stat-label">{label}</div>
@@ -58,11 +96,40 @@ export default function Home() {
             </div>
           </div>
         </Reveal>
-      </section>
+      </div>
+
+      {/* ── 연구 프로세스 ── */}
+      <Reveal>
+        <div className="section-head">
+          <div className="eyebrow">Research Process</div>
+          <h2>연구는 여섯 단계로 진행됩니다</h2>
+          <p>지금은 조사 단계입니다. 초기 응답으로 문항 이해도를 점검하며 본조사를 함께 진행하고, 조사가 끝나면 실제 분석값으로 결과를 갱신합니다.</p>
+        </div>
+        <div className="process">
+          {PROCESS.map(([no, title, desc, status]) => (
+            <div key={no} className={`step ${status}`}>
+              <div className="no">
+                {no}{status === "done" && " ✓"}
+                {status === "now" && <em className="now-badge"><i />진행 중</em>}
+              </div>
+              <strong>{title}</strong>
+              <span>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </Reveal>
 
       {/* ── 온톨로지 ── */}
       <Reveal>
-        <h2 className="section-title">스킬 온톨로지 — 스킬은 서로 연결되어 있다</h2>
+        <div className="section-head">
+          <div className="eyebrow">Skill Ontology</div>
+          <h2>스킬은 서로 연결되어 있다</h2>
+          <p style={{ maxWidth: "none" }}>
+            직무군–직무–과업–스킬 계층과 스킬 간 관계를 구조화했습니다.<br />
+            배치는 연결 구조가 스스로 만든 것이고, 노드 크기는 연결 수에 비례합니다.<br />
+            가장 큰 노드가 곧 이 조직에서 전이 가능성이 가장 높은 스킬입니다.
+          </p>
+        </div>
         <div className="card">
           <OntologyGraph skills={SKILLS} edges={SKILL_EDGES} />
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8 }}>
@@ -73,58 +140,65 @@ export default function Home() {
             <span className="badge"><i style={dot("var(--series-4)")} />경영지원</span>
           </div>
           <p className="hint" style={{ marginTop: 10 }}>
-            Workday Skills Cloud, Eightfold AI 등 실제 탤런트 인텔리전스 플랫폼이 쓰는
-            구조를 단순화한 것입니다. 스킬 간 연결이 있어야 &ldquo;이 사람이 빠지면 어떤
-            역량이 함께 위험해지는가&rdquo;를 계산할 수 있습니다.
+            NCS 분류 원리를 기준으로 ESCO·O*NET 구조를 참고해 구성했습니다. 가상의 반도체 기업
+            &lsquo;세미코어&rsquo;를 예시로 한 데이터이며, 실제 NCS 코드와 1:1로 매핑되지는 않습니다.
           </p>
         </div>
       </Reveal>
 
-      {/* ── 기능 3종 ── */}
+      {/* ── 만든 것 ── */}
       <Reveal>
-        <h2 className="section-title">이 데모가 보여주는 것</h2>
+        <div className="section-head">
+          <div className="eyebrow">What We Built</div>
+          <h2>직원이 보는 화면과 회사가 보는 화면</h2>
+          <p>같은 시스템을 양쪽에서 만들어 보면, 바로 그 비대칭이 프라이버시·공정성 우려의 출처라는 것이 드러납니다.</p>
+        </div>
       </Reveal>
       <div className="grid grid-3">
-        {[
-          ["① 조직 대시보드", "팀×스킬 히트맵으로 조직 스킬 현황을 한눈에. 단일 실패점(한 명에게만 있는 스킬)을 자동 탐지해 알림."],
-          ["② 퇴사 영향 시뮬레이션", "“이 직원이 퇴사한다면?” — 영향받는 프로젝트, 공백 스킬, 대체 후보를 즉시 계산. 공장 트윈의 what-if와 같은 구조."],
-          ["③ 인력 전망", "공식 통계(고용노동부 사업체노동력조사) 이직률을 기준선으로 12개월 인력 변화를 전망하고 리스킬링 필요 시점을 알림."],
-        ].map(([title, desc], i) => (
-          <Reveal key={title} delay={i * 90}>
-            <div className="card" style={{ height: "100%" }}>
-              <strong>{title}</strong>
-              <p className="hint">{desc}</p>
-            </div>
+        {FEATURES.map((f, i) => (
+          <Reveal key={f.title} delay={i * 90}>
+            <Link href={f.href} className="feature-card" style={{ display: "block" }}>
+              <div className="kicker">{f.kicker}</div>
+              <strong>{f.title}</strong>
+              <p>{f.desc}</p>
+              {f.sub ? (
+                <span className="feature-sub">
+                  {f.sub.map(([label]) => label).join(" · ")}
+                </span>
+              ) : (
+                <span className="feature-go">바로 해보기 →</span>
+              )}
+            </Link>
           </Reveal>
         ))}
       </div>
 
       {/* ── 산업 동향 ── */}
       <Reveal>
-        <h2 className="section-title">우리 산업은 지금 어떤가 — 산업 동향</h2>
+        <div className="section-head">
+          <div className="eyebrow">Labor Market</div>
+          <h2>이직이 잦은 산업일수록 효용이 커집니다</h2>
+          <p style={{ maxWidth: "none" }}>전체 취업자 2,915.4만명(2026.6), 월 이직률 4.9%(2026.5). 고용노동부·국가데이터처·미국 BLS 공표 자료 기준입니다.</p>
+        </div>
         <div className="card">
-          <p style={{ margin: "0 0 12px", fontSize: 14.5, color: "var(--ink-2)" }}>
-            전체 취업자 <strong className="num">2,915.4만명</strong>(2026.6), 월 이직률{" "}
-            <strong className="num">4.9%</strong>(2026.5). 이직이 잦은 산업일수록 스킬 기반
-            인력 예측의 효용이 커집니다.
-          </p>
           <HBarChart
             items={[
-              { label: "숙박·음식점업", value: 8.1, color: "var(--series-2)" },
-              { label: "건설업", value: 7.9, color: "var(--series-2)" },
-              { label: "예술·스포츠·여가", value: 5.9, color: "var(--series-2)" },
-              { label: "전 산업 평균", value: 4.9, color: "var(--series-7)" },
+              { label: "숙박·음식점업", value: 8.1 },
+              { label: "건설업", value: 7.9 },
+              { label: "예술·스포츠·여가", value: 5.9 },
+              { label: "전 산업 평균", value: 4.9, color: "var(--brand-soft)" },
               { label: "제조업", value: 2.9 },
               { label: "공공행정·교육", value: 2.0 },
             ]}
             unit="%"
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
-            <span className="hint">산업별 월 이직률 — 자세한 근거·국제 비교는 산업 동향 탭에</span>
+            <span className="hint">산업별 월 이직률 기준. 출처와 국제 비교는 산업 동향에서 확인할 수 있습니다.</span>
             <Link href="/industry" className="btn btn-ghost btn-pill">산업 동향 보기 →</Link>
           </div>
         </div>
       </Reveal>
+
     </>
   );
 }
