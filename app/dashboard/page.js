@@ -3,7 +3,7 @@ import { fetchBenchmark } from "@/lib/benchmarks";
 import { Heatmap, HBarChart } from "@/components/charts";
 import AlertFeed from "@/components/AlertFeed";
 
-export const metadata = { title: "조직 대시보드 — Weave" };
+export const metadata = { title: "조직 대시보드 · Weave" };
 
 export default async function Dashboard() {
   const benchmark = await fetchBenchmark();
@@ -50,7 +50,7 @@ export default async function Dashboard() {
       <h2 className="section-title">팀 × 스킬 보유 현황</h2>
       <div className="card">
         <Heatmap rows={matrix} cols={SKILLS} colLabel={(c) => c.name} />
-        <p className="hint">색이 진할수록 보유 인원이 많음. 빈 칸(회색)은 보유자 0명 — 팀 간 스킬 공백 지점.</p>
+        <p className="hint">색이 진할수록 보유 인원이 많음. 빈 칸(회색)은 보유자 0명, 팀 간 스킬 공백 지점.</p>
       </div>
 
       <div className="grid grid-2" style={{ marginTop: 14 }}>

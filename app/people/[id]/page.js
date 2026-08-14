@@ -89,7 +89,7 @@ export default function Person({ params }) {
         </div>
       </div>
       <p className="hint" style={{ marginTop: 12 }}>
-        공장 디지털 트윈의 &ldquo;습도가 오르면?&rdquo; 시나리오와 같은 구조입니다 —
+        공장 디지털 트윈의 &ldquo;습도가 오르면?&rdquo; 시나리오와 같은 구조입니다.
         변수(인력) 하나를 바꿨을 때의 파급 효과를 온톨로지 그래프로 즉시 계산합니다.
       </p>
     </>

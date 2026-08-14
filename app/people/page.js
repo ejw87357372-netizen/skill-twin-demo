@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { EMPLOYEES, TEAMS, skillName } from "@/lib/data";
 
-export const metadata = { title: "인재 프로필 — Weave" };
+export const metadata = { title: "인재 프로필 · Weave" };
 
 export default function People() {
   return (

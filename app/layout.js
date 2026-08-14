@@ -2,7 +2,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "Weave — AI 기반 인재관리 시스템 데모",
+  title: "Weave · AI 기반 인재관리 시스템 데모",
   description:
     "AI 기반 인재관리 시스템 데모. 스킬 온톨로지로 가상 조직의 스킬 현황, 퇴사 영향 시뮬레이션, 인력 전망을 시연합니다.",
 };

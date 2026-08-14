@@ -35,7 +35,7 @@ export default function Simulation() {
     <>
       <h1 className="section-title" style={{ fontSize: 22, marginTop: 28 }}>인력 시뮬레이션</h1>
       <p className="hint">
-        기준선: {benchmark.label} 월 이직률 {benchmark.turnoverMonthlyPct}% —{" "}
+        기준선: {benchmark.label} 월 이직률 {benchmark.turnoverMonthlyPct}%.{" "}
         {benchmark.live ? "KOSIS API 실시간 공표치" : "폴백 예시값 (KOSIS_API_URL 설정 시 자동 갱신)"}
       </p>
 
@@ -103,7 +103,7 @@ export default function Simulation() {
           조정 시나리오 기준 12개월 뒤 <strong className="num">{after12}명</strong>으로 전망됩니다.
           {after12 < supply * 0.85 && (
             <span style={{ color: "var(--status-critical)" }}>
-              {" "}▲ 15% 이상 감소 — 채용·리스킬링 선제 대응이 필요한 구간입니다.
+              {" "}▲ 15% 이상 감소: 채용·리스킬링 선제 대응이 필요한 구간입니다.
             </span>
           )}
         </p>

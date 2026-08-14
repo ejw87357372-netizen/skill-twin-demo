@@ -58,7 +58,7 @@ export default function HeroMark() {
   const { nodes, edges } = GRAPH;
   return (
     <svg className="hero-mark" viewBox="-260 -125 920 430" role="img"
-         aria-label="Weave — 스킬 그래프 위의 로고">
+         aria-label="Weave 스킬 그래프 로고">
       <defs>
         <linearGradient id="hmInk" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="var(--hm-ink-a)" />

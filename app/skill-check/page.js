@@ -29,7 +29,7 @@ export default function SkillCheck() {
     return (
       <div style={{ maxWidth: 760, margin: "32px auto" }}>
         <span className="tag">직원 관점 · 시연용 가상 직무 카탈로그</span>
-        <h1 style={{ fontSize: 24, margin: "8px 0 4px" }}>스킬 진단 — 희망 직무를 선택하세요</h1>
+        <h1 style={{ fontSize: 24, margin: "8px 0 4px" }}>스킬 진단: 희망 직무를 선택하세요</h1>
         <p className="hint">
           희망 직무와 보유 스킬을 입력하면, 스킬 온톨로지를 기준으로 부족 스킬과 학습 경로를
           제안합니다.
@@ -37,9 +37,9 @@ export default function SkillCheck() {
         <div className="card" style={{ marginTop: 10, padding: "12px 16px" }}>
           <strong style={{ fontSize: 14 }}>이 진단은 성과평가가 아닙니다</strong>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 8, fontSize: 13, color: "var(--ink-2)" }}>
-            <span>✓ <strong>자가진단</strong> — 시험·검증 없이 본인 판단으로 입력하는 경력개발 참고 도구</span>
-            <span>✓ <strong>내 브라우저에서만 처리</strong> — 입력한 직무·스킬은 서버로 전송·저장되지 않음</span>
-            <span>✓ <strong>근거 공개</strong> — 준비도 계산식과 추천 이유(온톨로지 인접 관계)를 화면에 표시</span>
+            <span>✓ <strong>자가진단</strong>: 시험·검증 없이 본인 판단으로 입력하는 경력개발 참고 도구</span>
+            <span>✓ <strong>내 브라우저에서만 처리</strong>: 입력한 직무·스킬은 서버로 전송·저장되지 않음</span>
+            <span>✓ <strong>근거 공개</strong>: 준비도 계산식과 추천 이유(온톨로지 인접 관계)를 화면에 표시</span>
           </div>
         </div>
         <div className="grid grid-3" style={{ marginTop: 14 }}>
@@ -135,7 +135,7 @@ export default function SkillCheck() {
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>
-        <strong>경력 경로 — 지금 위치에서 목표까지</strong>
+        <strong>경력 경로: 지금 위치에서 목표까지</strong>
         <p className="hint" style={{ margin: "4px 0 10px" }}>
           입력하신 스킬로 추정한 현재 위치는 <strong style={{ color: "var(--ink-1)" }}>{currentRole.name}</strong>입니다.
           직무 간 이동 가능성은 두 직무가 공유하는 필수 스킬(전이 가능 스킬)로 계산했습니다.
@@ -164,13 +164,13 @@ export default function SkillCheck() {
         </div>
         {bridgeSkills.length > 0 && (
           <p className="hint" style={{ marginTop: 10 }}>
-            전이 가능 스킬: {bridgeSkills.join(", ")} — 이미 가진 이 스킬들이 두 직무를 잇습니다.
+            전이 가능 스킬: {bridgeSkills.join(", ")}. 이미 가진 이 스킬들이 두 직무를 잇습니다.
           </p>
         )}
       </div>
 
       <div className="card" style={{ marginTop: 14 }}>
-        <strong>과업별 충족도 — {role.name}</strong>
+        <strong>과업별 충족도: {role.name}</strong>
         <p className="hint" style={{ margin: "4px 0 8px" }}>
           직무를 과업 단위로 나눠 본 결과입니다. ● 필수 · ○ 선택
         </p>
@@ -199,7 +199,7 @@ export default function SkillCheck() {
       )}
 
       <div className="card" style={{ marginTop: 14 }}>
-        <strong>부족 스킬과 추천 교육 {gaps.length === 0 && "— 없음!"}</strong>
+        <strong>부족 스킬과 추천 교육 {gaps.length === 0 && "· 없음!"}</strong>
         {gaps.length > 0 && <p className="hint" style={{ margin: "4px 0 0" }}>우선순위 = 격차(요구−보유)가 큰 순서. 격차가 큰 스킬부터 채우는 것이 준비도를 가장 빨리 올립니다.</p>}
         {gaps.length === 0 ? (
           <p className="hint" style={{ marginTop: 6 }}>요구 스킬을 모두 충족했어요. 인접 직무 탐색을 권해요.</p>
@@ -236,7 +236,7 @@ export default function SkillCheck() {
       <div className="card" style={{ marginTop: 14 }}>
         <p className="hint" style={{ margin: 0 }}>
           이 진단은 시연용 가상 카탈로그 기반의 참고 정보이며, 실제 인사평가·배치 결정에
-          사용되지 않습니다. 이런 시스템이 회사에 도입된다면 어떻게 느끼실지 —{" "}
+          사용되지 않습니다. 이런 시스템이 회사에 도입된다면 어떻게 느끼실지,{" "}
           <Link href="/survey" style={{ color: "var(--series-1)" }}>수용성 진단</Link>에 참여해 보세요.
         </p>
         <button className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => { setStep("role"); setOwned({}); }}>

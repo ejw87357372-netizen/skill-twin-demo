@@ -1,4 +1,12 @@
-/* 영문 디스플레이 폰트 — Space Grotesk (OFL, 가변·라틴 서브셋 자체 서빙) */
+/* 영문 디스플레이 폰트 — Vanilla Ravioli Demo (자체 서빙) */
+@font-face {
+  font-family: "VanillaRavioli";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/VanillaRavioli.woff2") format("woff2");
+}
+/* 보조 영문 폰트 — Space Grotesk */
 @font-face {
   font-family: "Space Grotesk";
   font-style: normal;
@@ -265,9 +273,9 @@ select {
   letter-spacing: -3px; font-weight: 800; margin: 10px 0 20px; color: var(--ink-1);
 }
 .hero-light h1.hero-en {
-  font-family: "Space Grotesk", "Pretendard Variable", sans-serif;
-  font-size: clamp(42px, 7vw, 84px); line-height: 1.04;
-  letter-spacing: -2.5px; font-weight: 700; margin: 8px 0 16px;
+  font-family: "VanillaRavioli", "Space Grotesk", "Pretendard Variable", sans-serif;
+  font-size: clamp(42px, 7vw, 84px); line-height: 1.06;
+  letter-spacing: 0; font-weight: 400; margin: 8px 0 16px;
 }
 .hero-sub-ko {
   font-size: clamp(16px, 2vw, 21px); font-weight: 700;

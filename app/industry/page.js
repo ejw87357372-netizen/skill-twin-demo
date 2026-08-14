@@ -5,7 +5,7 @@ import {
 import { HBarChart } from "@/components/charts";
 import Reveal from "@/components/Reveal";
 
-export const metadata = { title: "산업 동향 — Weave" };
+export const metadata = { title: "산업 동향 · Weave" };
 
 const fmtChange = (v) => (v > 0 ? `+${v}` : `${v}`);
 
@@ -36,7 +36,7 @@ export default function Industry() {
         <span className="tag">공식 통계 기반 · 산업 맥락</span>
         <h1>산업별 고용 점유율과 이직 동태</h1>
         <p>
-          스킬 기반 인재관리가 필요한 이유는 산업마다 다릅니다 — 이직이 잦은 산업은 인력 공백
+          스킬 기반 인재관리가 필요한 이유는 산업마다 다릅니다. 이직이 잦은 산업은 인력 공백
           예측이, 고용이 줄어드는 산업은 리스킬링 경로 설계가 먼저입니다. 이 탭은 고용노동부
           사업체노동력조사·경제활동인구조사(국가데이터처)·미국 BLS JOLTS의 공표 자료로 그 맥락을 보여줍니다.
         </p>
@@ -44,7 +44,7 @@ export default function Industry() {
           <span className="badge" style={{ color: "var(--good-text)", marginRight: 6 }}>공표치</span>
           보도자료·공표 요약에서 확인한 수치 ·{" "}
           <span className="badge" style={{ color: "var(--series-2)", margin: "0 6px" }}>예시값 · 갱신 필요</span>
-          구조 시연용 근사값 — 발표 전 KOSIS 최신 공표치로 갱신하세요.
+          구조 시연용 근사값이며, 발표 전 KOSIS 최신 공표치로 갱신하세요.
         </p>
       </section>
 
@@ -59,7 +59,7 @@ export default function Industry() {
       </section>
 
       <Reveal>
-      <h2 className="section-title">산업별 고용 점유율 — 전체 취업자 대비 (%)</h2>
+      <h2 className="section-title">산업별 고용 점유율 (전체 취업자 대비, %)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={false} /> <span className="hint">산업별 규모는 연간 공표치 기준 근사, 분모(취업자 {EMPLOYED_TOTAL}만명)는 2026.6 공표치</span></div>
         <HBarChart items={share} unit="%" />
@@ -71,7 +71,7 @@ export default function Industry() {
       </Reveal>
 
       <Reveal>
-      <h2 className="section-title">어느 산업에서 사람이 늘고 줄었나 — 전년동월대비 증감 (만명)</h2>
+      <h2 className="section-title">어느 산업에서 사람이 늘고 줄었나 (전년동월대비 증감, 만명)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={true} asOf="2026.6 / 2026.5" /> <span className="hint">경제활동인구조사(취업자)·사업체노동력조사(종사자) 공표치</span></div>
         <table className="data" style={{ width: "100%" }}>
@@ -94,7 +94,7 @@ export default function Industry() {
       </Reveal>
 
       <Reveal>
-      <h2 className="section-title">이직 동태 — 입직률·이직률 추이와 산업별 수준</h2>
+      <h2 className="section-title">이직 동태: 입직률·이직률 추이와 산업별 수준</h2>
       <div className="grid grid-2">
         <div className="card">
           <strong>전체 입직률·이직률 추이 (월, %)</strong>{" "}
@@ -128,7 +128,7 @@ export default function Industry() {
       </Reveal>
 
       <Reveal>
-      <h2 className="section-title">국제 비교 — 미국 산업별 자발적 이직률 (JOLTS quits rate)</h2>
+      <h2 className="section-title">국제 비교: 미국 산업별 자발적 이직률 (JOLTS quits rate)</h2>
       <div className="card">
         <div style={{ marginBottom: 6 }}><Badge verified={true} asOf="2026.4" /> <span className="hint">미국 노동통계국(BLS), 계절조정</span></div>
         <HBarChart
@@ -145,7 +145,7 @@ export default function Industry() {
           {SOURCES.map((s) => (
             <li key={s.id}>
               <a href={s.url} target="_blank" rel="noreferrer" style={{ color: "var(--series-1)" }}>{s.name}</a>
-              {" — "}{s.note}
+              {" · "}{s.note}
             </li>
           ))}
         </ul>

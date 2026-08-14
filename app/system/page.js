@@ -6,7 +6,7 @@
 import { useMemo, useState } from "react";
 import {
   EMPLOYEES, PROJECT, SEARCH_RESULTS, TEAM_INIT, ALTERNATES,
-  GAPS, PATHS, RETENTION, DEMO_STEPS, empById,
+  GAPS, PATHS, RETENTION, empById,
 } from "@/lib/tcData";
 
 // 화면 관점 구분: admin = 인사담당자, emp = 직원 본인, all = 전 구성원 공통
@@ -15,7 +15,7 @@ const MENU_GROUPS = [
     ["dash", "통합 대시보드"], ["search", "AI 인재 탐색"],
     ["matching", "프로젝트 매칭"], ["retention", "인재 유지관리"],
   ]],
-  ["직원 화면", "emp", [
+  ["구성원 화면", "emp", [
     ["profile", "내 역량 프로필"], ["training", "역량 진단·교육 추천"], ["career", "경력경로"],
   ]],
   ["공통", "all", [
@@ -25,9 +25,9 @@ const MENU_GROUPS = [
 const AUD = { dash: "admin", search: "admin", matching: "admin", retention: "admin",
   profile: "emp", training: "emp", career: "emp", fairness: "all", about: "all" };
 const AUD_LABEL = {
-  admin: "지금 보는 화면: 관리자(인사담당자) 관점",
-  emp: "지금 보는 화면: 직원 본인 관점",
-  all: "지금 보는 화면: 전 구성원 공통",
+  admin: "관리자 화면",
+  emp: "구성원 화면",
+  all: "공통 화면",
 };
 
 const CHECKS = [
@@ -72,23 +72,12 @@ export default function System() {
   const [courseState, setCourseState] = useState({});
   const [pathSel, setPathSel] = useState(null);
 
-  // 시연 시나리오
-  const [demoOn, setDemoOn] = useState(false);
-  const [demoStep, setDemoStep] = useState(0);
-  const [demoModal, setDemoModal] = useState(false);
-
   const resetAll = () => {
     setScreen("dash"); setSearched(false); setWhy(null); setFDept("전체"); setFSkill("전체");
     setTeam(TEAM_INIT); setConfirmed({}); setChecks(CHECKS.map(() => false)); setPlaced(false);
     setWantRole(me.wantRole); setRecvRec(true); setAiExcluded({}); setRequests([]);
     setCourseState({}); setPathSel(null);
-    setDemoOn(false); setDemoStep(0);
-    toast("시연 데이터를 초기 상태로 되돌렸습니다.");
-  };
-
-  const gotoDemo = (i) => {
-    const idx = Math.max(0, Math.min(DEMO_STEPS.length - 1, i));
-    setDemoStep(idx); setScreen(DEMO_STEPS[idx][1]);
+    toast("데이터를 초기 상태로 되돌렸습니다.");
   };
 
   const results = useMemo(() => SEARCH_RESULTS.filter((r) => {
@@ -105,21 +94,8 @@ export default function System() {
       {/* ── 헤더 ── */}
       <header className="tc-head">
         <div>
-          <div className="tc-title">Talent Compass AI <span className="tc-demo-tag">데모 · 가상 데이터</span></div>
+          <div className="tc-title">Weave AI <span className="tc-demo-tag">데모 · 가상 데이터</span></div>
           <div className="tc-sub">사람의 가능성과 조직의 기회를 연결하는 AI 인재관리 시스템</div>
-        </div>
-        <div className="tc-head-actions">
-          {demoOn && (
-            <div className="tc-step-pill">
-              <b>{demoStep + 1}/{DEMO_STEPS.length}</b> {DEMO_STEPS[demoStep][0]}
-              <button onClick={() => gotoDemo(demoStep - 1)} disabled={demoStep === 0}>이전</button>
-              <button onClick={() => demoStep === DEMO_STEPS.length - 1 ? (setDemoOn(false), toast("시연 시나리오를 마쳤습니다.")) : gotoDemo(demoStep + 1)}>
-                {demoStep === DEMO_STEPS.length - 1 ? "종료" : "다음"}
-              </button>
-            </div>
-          )}
-          {!demoOn && <button className="tc-btn primary" onClick={() => setDemoModal(true)}>시연 시작</button>}
-          <button className="tc-btn ghost" onClick={resetAll}>초기화</button>
         </div>
       </header>
 
@@ -197,21 +173,6 @@ export default function System() {
         </Modal>
       )}
 
-      {/* ── 시연 안내 모달 ── */}
-      {demoModal && (
-        <Modal onClose={() => setDemoModal(false)} title="핵심 시연 시나리오 (8단계)">
-          <ol className="tc-ol">
-            {DEMO_STEPS.map(([label], i) => <li key={i}>{label}</li>)}
-          </ol>
-          <p className="tc-p muted">상단의 이전·다음 버튼으로 각 단계에 해당하는 화면으로 이동합니다.</p>
-          <div className="tc-row-end">
-            <button className="tc-btn primary" onClick={() => { setDemoModal(false); setDemoOn(true); gotoDemo(0); }}>
-              1단계부터 시작
-            </button>
-          </div>
-        </Modal>
-      )}
-
       {/* ── 토스트 ── */}
       <div className="tc-toasts">
         {toasts.map((t) => <div key={t.id} className="tc-toast">{t.msg}</div>)}
@@ -276,14 +237,9 @@ function Dash() {
 
 /* ═══════════ 화면 2. AI 인재 탐색 ═══════════ */
 function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFSkill, openWhy, toast }) {
-  const [q, setQ] = useState("공공데이터 프로젝트 경험이 있고 Java·Spring Boot를 사용할 수 있으며, 프로젝트 관리 경험이 있는 인재를 찾아줘.");
   return (
     <>
-      <Card title="자연어 인재 검색">
-        <div className="tc-searchrow">
-          <textarea className="tc-input" rows={2} value={q} onChange={(e) => setQ(e.target.value)} />
-          <button className="tc-btn primary" onClick={() => { setSearched(true); toast("규칙 기반 매칭으로 4명을 찾았습니다."); }}>검색</button>
-        </div>
+      <Card title="인재 검색">
         <div className="tc-filters">
           <label>부서
             <select value={fDept} onChange={(e) => setFDept(e.target.value)}>
@@ -295,13 +251,14 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
               {["전체", "Java", "Spring Boot", "Python", "Oracle", "데이터 모델링", "머신러닝", "AWS", "Kubernetes", "React", "Figma", "UX 리서치", "테스트 자동화", "프로젝트 관리", "HR 데이터 분석", "B2B 영업", "콘텐츠 기획", "광고 운영"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
+          <button className="tc-btn primary" onClick={() => { setSearched(true); toast("규칙 기반 매칭으로 후보를 찾았습니다."); }}>검색</button>
           <span className="muted tc-p" style={{ margin: 0 }}>그 외 필터: 숙련도 · 자격증 · 희망 직무 · 투입 가능 시점 · 경력연수</span>
         </div>
       </Card>
 
       {searched && (
         <>
-          <Notice>적합도는 직원의 우열을 평가하는 점수가 아니라, 현재 프로젝트 요구조건과 등록된 역량정보의 일치 정도입니다.</Notice>
+          <Notice>적합도는 구성원의 우열을 평가하는 점수가 아니라, 현재 프로젝트 요구조건과 등록된 역량정보의 일치 정도입니다.</Notice>
           <div className="tc-cards">
             {results.map((r) => {
               const e = empById(r.id);
@@ -330,7 +287,7 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
           </div>
         </>
       )}
-      {!searched && <p className="tc-p muted">검색 버튼을 누르면 규칙 기반 매칭 결과(가상 직원 4명)가 표시됩니다.</p>}
+      {!searched && <p className="tc-p muted">조건을 고르고 검색 버튼을 누르면 프로젝트 요구조건과의 일치도 순으로 후보가 표시됩니다.</p>}
     </>
   );
 }
@@ -689,10 +646,14 @@ function Modal({ title, onClose, children }) {
 /* ═══════════ 스타일 ═══════════ */
 const CSS = `
 .tc { margin: 0 calc(50% - 50vw); background: var(--page); min-height: calc(100vh - 57px);
-  font-size: 14px; }
+  font-size: 14px; word-break: keep-all;
+  font-family: "Pretendard Variable", Pretendard, system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Segoe UI", "Noto Sans KR", sans-serif; }
+.tc .tc-badge, .tc .tc-bar .l, .tc .tc-bar .v, .tc .tc-kpi span, .tc-side button { white-space: nowrap; }
+.tc-title { font-family: "VanillaRavioli", "Pretendard Variable", sans-serif; font-weight: 400; }
 .tc-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;
   padding: 16px 26px; background: var(--surface-1); border-bottom: 1px solid var(--border); }
-.tc-title { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+.tc-title { font-size: 21px; letter-spacing: 0.2px; }
 .tc-demo-tag { font-size: 11.5px; font-weight: 700; color: #b45f22; background: rgba(201,106,60,0.12);
   border-radius: 999px; padding: 3px 10px; vertical-align: 3px; margin-left: 6px; }
 .tc-sub { font-size: 12.5px; color: var(--ink-muted); margin-top: 2px; }

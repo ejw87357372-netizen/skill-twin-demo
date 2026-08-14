@@ -132,7 +132,7 @@ export default function Survey() {
               }}
             >
               <strong className="num">{v}</strong>
-              {SCALE_LABELS[v] ? ` — ${SCALE_LABELS[v]}` : ""}
+              {SCALE_LABELS[v] ? ` · ${SCALE_LABELS[v]}` : ""}
             </button>
           ))}
         </div>
@@ -178,7 +178,7 @@ export default function Survey() {
           <div style={{ height: 8, width: `${pct(privacy)}%`, background: privacy >= 5 ? "var(--series-2)" : "var(--series-1)", borderRadius: 99 }} />
         </div>
         <p className="hint">
-          이 요인만 방향이 반대입니다 — <strong>값이 클수록 우려가 크고 수용에 불리</strong>합니다.
+          이 요인만 방향이 반대입니다. <strong>값이 클수록 우려가 크고 수용에 불리</strong>합니다.
           연구 모형에서 프라이버시 우려는 수용 의도에 부(−)의 영향을 미칠 것으로 가정합니다.
         </p>
       </div>
@@ -195,7 +195,7 @@ export default function Survey() {
         {consent ? (
           saved === null ? <p className="hint">응답 저장 중…</p>
           : saved ? <p className="hint" style={{ color: "var(--good-text)" }}>✓ 응답이 익명으로 저장되었습니다. 연구 참여에 감사드립니다!</p>
-          : <p className="hint">응답 저장이 설정되지 않았거나 실패했습니다. (결과는 정상입니다 — Supabase 연결 후 저장됩니다)</p>
+          : <p className="hint">응답 저장이 설정되지 않았거나 실패했습니다. (결과는 정상입니다. 저장 설정 전이기 때문입니다)</p>
         ) : (
           <p className="hint">동의 없이 진행하여 응답은 저장되지 않았습니다.</p>
         )}
@@ -213,7 +213,7 @@ function IndustryContext({ option }) {
   if (!hits) return null;
   return (
     <div className="card" style={{ marginTop: 14 }}>
-      <strong>내 산업의 고용·이직 맥락 — {option}</strong>
+      <strong>내 산업의 고용·이직 맥락: {option}</strong>
       {hits.map((d) => (
         <p key={d.id} style={{ fontSize: 14, color: "var(--ink-2)", margin: "8px 0 0" }}>
           <span style={{ fontWeight: 600, color: "var(--ink-1)" }}>{d.name}</span>
@@ -226,7 +226,7 @@ function IndustryContext({ option }) {
               (전년동월대비)
             </>
           )}
-          {" — "}{d.trendNote}
+          {" · "}{d.trendNote}
         </p>
       ))}
       <p className="hint" style={{ marginTop: 10 }}>

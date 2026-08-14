@@ -29,7 +29,6 @@ export default function Nav() {
             </Link>
           ))}
         </div>
-        <Link href="/survey" className="btn nav-cta">수용성 진단</Link>
       </div>
     </nav>
   );

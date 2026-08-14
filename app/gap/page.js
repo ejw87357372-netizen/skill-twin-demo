@@ -3,7 +3,7 @@ import { HBarChart } from "@/components/charts";
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 
-export const metadata = { title: "스킬 갭 분석 — Weave" };
+export const metadata = { title: "스킬 갭 분석 · Weave" };
 
 export default function Gap() {
   const { byRole, courseDemand, teamReadiness, total } = orgGapReport();
@@ -12,10 +12,10 @@ export default function Gap() {
     <>
       <section className="hero" style={{ paddingBottom: 10 }}>
         <span className="tag">HR 관점 · 가상 데이터 시연</span>
-        <h1>스킬 갭 분석 — 조직은 무엇을 준비해야 하는가</h1>
+        <h1>스킬 갭 분석: 조직은 무엇을 준비해야 하는가</h1>
         <p>
           직원들의 스킬 진단이 쌓이면, 인사팀은 개인이 아니라 <strong>조직 단위의 패턴</strong>을
-          봅니다 — 어떤 직무로 성장할 인재가 얼마나 준비되어 있고, 어떤 교육을 먼저 열어야
+          봅니다. 어떤 직무로 성장할 인재가 얼마나 준비되어 있고, 어떤 교육을 먼저 열어야
           하는지. 아래는 가상 직원 {total}명의 데이터로 계산한 집계 화면입니다.
         </p>
       </section>
@@ -23,13 +23,13 @@ export default function Gap() {
       <div className="card" style={{ padding: "12px 16px" }}>
         <strong style={{ fontSize: 14 }}>프라이버시 설계 원칙 (이 화면이 보여주지 않는 것)</strong>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 8, fontSize: 13, color: "var(--ink-2)" }}>
-          <span>✓ 개인별 진단 결과는 본인 외 누구에게도 제공되지 않음 — HR은 <strong>익명 집계만</strong> 열람</span>
+          <span>✓ 개인별 진단 결과는 본인 외 누구에게도 제공되지 않음. HR은 <strong>익명 집계만</strong> 열람</span>
           <span>✓ 집계는 <strong>동의한 응답만</strong> 포함하는 것을 전제로 설계</span>
           <span>✓ 실서비스 기준: 5인 미만 소집단 수치는 재식별 위험으로 미표시(k-익명성)</span>
         </div>
       </div>
 
-      <h2 className="section-title">직무별 인재 준비 현황 — 내부에서 키울 수 있는가</h2>
+      <h2 className="section-title">직무별 인재 준비 현황: 내부에서 키울 수 있는가</h2>
       <div className="card">
         <table className="data" style={{ width: "100%" }}>
           <thead>
@@ -47,7 +47,7 @@ export default function Gap() {
                 <td className="num" style={{ textAlign: "right", fontWeight: 700, color: ready > 0 ? "var(--good-text)" : "var(--series-2)" }}>{ready}명</td>
                 <td className="num" style={{ textAlign: "right" }}>{near}명</td>
                 <td style={{ fontSize: 13, color: "var(--ink-2)" }}>
-                  {ready === 0 && near === 0 ? "내부 육성 어려움 — 채용 검토"
+                  {ready === 0 && near === 0 ? "내부 육성 어려움(채용 검토)"
                     : ready === 0 ? "교육 투자 시 내부 전환 가능"
                     : "내부 충원 여력 있음"}
                 </td>
@@ -63,7 +63,7 @@ export default function Gap() {
       </div>
 
       <Reveal>
-      <h2 className="section-title">교육 수요 Top 10 — 어떤 교육을 먼저 열어야 하나</h2>
+      <h2 className="section-title">교육 수요 Top 10: 어떤 교육을 먼저 열어야 하나</h2>
       <div className="card">
         <HBarChart items={courseDemand} unit="명" labelW={215} />
         <p className="hint">
