@@ -322,7 +322,7 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
 }
 
 /** 레이더 차트 — 프로필 비교 (items[].value = 실선 채움, items[].target = 점선 기준선) */
-export function RadarChart({ items, max = 7 }) {
+export function RadarChart({ items, max = 7, label = "요인별 프로필 레이더 차트" }) {
   const W = 420, H = 360, cx = W / 2, cy = H / 2 + 6, R = 120;
   const n = items.length;
   const pt = (i, v) => {
@@ -333,7 +333,7 @@ export function RadarChart({ items, max = 7 }) {
   const ring = (v) => items.map((_, i) => pt(i, v).join(",")).join(" ");
   const poly = items.map((d, i) => pt(i, d.value).join(",")).join(" ");
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="6요인 수용도 레이더 차트" style={{ maxWidth: 460 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={label} style={{ maxWidth: 460 }}>
       {[max / 3, (max * 2) / 3, max].map((v) => (
         <polygon key={v} points={ring(v)} fill="none" stroke="var(--grid)" strokeWidth="1" />
       ))}

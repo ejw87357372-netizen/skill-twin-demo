@@ -105,10 +105,6 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-links a:hover { background: var(--border); }
 .nav-links a.active { color: var(--ink-1); font-weight: 600; }
-.nav-cta {
-  padding: 8px 16px; border-radius: 999px; font-size: 13.5px;
-  margin-left: 6px; white-space: nowrap;
-}
 
 /* 카드/타일 */
 .card {
@@ -182,35 +178,11 @@ select {
   border-radius: 999px; padding: 3px 10px; margin-bottom: 16px;
 }
 
-/* ── 랜딩 히어로 (센터 정렬 + 은은한 그라데이션 워시) ── */
-.hero-wash {
-  position: relative;
-  margin: 0 calc(50% - 50vw); padding: 64px 20px 40px;
-  text-align: center; overflow: hidden;
-}
-.hero-wash::before {
-  content: ""; position: absolute; inset: -30% -10% auto -10%; height: 150%;
-  background:
-    radial-gradient(52% 58% at 20% 38%, color-mix(in srgb, var(--brand-soft) 34%, transparent) 0%, transparent 72%),
-    radial-gradient(48% 54% at 80% 34%, color-mix(in srgb, var(--brand) 20%, transparent) 0%, transparent 72%),
-    radial-gradient(44% 42% at 52% 98%, color-mix(in srgb, var(--seq-250) 26%, transparent) 0%, transparent 72%);
-  filter: blur(22px); z-index: -1; pointer-events: none;
-}
-.hero-wash h1 {
-  font-size: clamp(38px, 6.2vw, 68px); line-height: 1.14;
-  letter-spacing: -2.5px; font-weight: 700; margin: 14px 0 18px;
-}
-.hero-wash .lede {
-  color: var(--ink-2); font-size: clamp(15px, 1.7vw, 19px);
-  max-width: 640px; margin: 0 auto 28px;
-}
+
+.btn-pill { border-radius: 999px; padding: 11px 22px; }
 .cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .cta-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.cta-group-label {
-  font-size: 11.5px; font-weight: 700; letter-spacing: 0.6px;
-  text-transform: uppercase; color: var(--ink-muted);
-}
-.btn-pill { border-radius: 999px; padding: 11px 22px; }
+.cta-group-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--ink-muted); }
 
 /* ── 로비 히어로: 밝은 패널 ──
    흰 종이 위에 얇게 인쇄된 느낌. 깊이는 색을 어둡게 해서가 아니라
@@ -591,11 +563,15 @@ select {
 .feature-card .kicker { font-size: 12px; font-weight: 700; color: var(--brand-soft); letter-spacing: 0.6px; }
 .feature-card strong { display: block; font-size: 16px; margin: 8px 0 6px; letter-spacing: -0.4px; }
 .feature-card p { font-size: 13.5px; color: var(--ink-2); margin: 0; line-height: 1.62; }
-.feature-go, .feature-sub {
-  display: inline-block; margin-top: 14px;
-  font-size: 12.5px; font-weight: 600; color: var(--brand);
+.feature-wrap { display: flex; flex-direction: column; height: 100%; }
+.feature-go { display: inline-block; margin-top: 14px; font-size: 12.5px; font-weight: 600; color: var(--brand); }
+.feature-sub { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.feature-sub a {
+  font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 13px; transition: border-color 0.2s, color 0.2s;
 }
-.feature-sub { color: var(--ink-muted); font-weight: 500; }
+.feature-sub a:hover { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
 
 .cta-band {
   position: relative; isolation: isolate; overflow: hidden;

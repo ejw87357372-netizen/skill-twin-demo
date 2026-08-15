@@ -161,7 +161,7 @@ export default function Survey() {
       </div>
       <div className="card" style={{ marginTop: 14 }}>
         <strong>수용 요인 프로필 (5요인)</strong>
-        <RadarChart items={radar} />
+        <RadarChart label="수용 요인 5개 프로필 레이더 차트" items={radar} />
         <p className="hint">
           모두 값이 클수록 수용에 유리한 방향의 요인입니다. 방향이 반대인 프라이버시 우려는 아래에 따로 표시했습니다.
         </p>

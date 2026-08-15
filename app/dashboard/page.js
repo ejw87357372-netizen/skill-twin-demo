@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SKILLS, EMPLOYEES, teamSkillMatrix, singlePointsOfFailure, holdersOf, buildAlerts } from "@/lib/data";
 import { fetchBenchmark } from "@/lib/benchmarks";
 import { Heatmap, HBarChart } from "@/components/charts";
@@ -18,6 +19,14 @@ export default async function Dashboard() {
     <>
       <h1 className="section-title" style={{ fontSize: 22, marginTop: 28 }}>조직 스킬 대시보드</h1>
       <p className="hint">가상 반도체 기업 세미코어 · 직원 {EMPLOYEES.length}명 · 데이터는 전부 가상</p>
+      <p className="hint" style={{ marginTop: 4 }}>
+        본 화면은 조직 단위 집계만 보여주며, 어떤 수치도 개인에 대한 인사평가·배치 결정에 사용되지 않습니다.
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+        <Link href="/people" className="btn btn-ghost btn-pill">인재 프로필</Link>
+        <Link href="/simulation" className="btn btn-ghost btn-pill">인력 시뮬레이션</Link>
+        <Link href="/gap" className="btn btn-ghost btn-pill">스킬 갭 분석</Link>
+      </div>
 
       <div className="grid grid-4" style={{ marginTop: 14 }}>
         <div className="card">

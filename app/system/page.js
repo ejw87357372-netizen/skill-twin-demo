@@ -1,12 +1,12 @@
 "use client";
 // ─────────────────────────────────────────────────────────────
-// Talent Compass AI — 관리자용 통합 데모 (단일 클라이언트 컴포넌트)
+// Weave AI — 관리자·구성원 통합 데모 (단일 클라이언트 컴포넌트)
 // 백엔드·외부 API 없음. 모든 추천은 규칙 기반 가상 데이터.
 // ─────────────────────────────────────────────────────────────
 import { useMemo, useState } from "react";
 import {
   EMPLOYEES, PROJECT, SEARCH_RESULTS, TEAM_INIT, ALTERNATES,
-  GAPS, PATHS, RETENTION, empById,
+  GAPS, GAPS_BY_ROLE, PATHS, RETENTION, empById,
 } from "@/lib/tcData";
 
 // 화면 관점 구분: admin = 인사담당자, emp = 직원 본인, all = 전 구성원 공통
@@ -31,10 +31,10 @@ const AUD_LABEL = {
 };
 
 const CHECKS = [
-  "직원에게 추천 사실을 안내했는가?",
-  "직원의 프로젝트 참여의사를 확인했는가?",
+  "구성원에게 추천 사실을 안내했는가?",
+  "구성원의 프로젝트 참여의사를 확인했는가?",
   "추천 근거를 담당자가 검토했는가?",
-  "특정 직원에게 기회가 편중되지 않았는가?",
+  "특정 구성원에게 기회가 편중되지 않았는가?",
   "AI가 제시한 후보 외의 인재도 검토했는가?",
 ];
 
@@ -72,14 +72,6 @@ export default function System() {
   const [courseState, setCourseState] = useState({});
   const [pathSel, setPathSel] = useState(null);
 
-  const resetAll = () => {
-    setScreen("dash"); setSearched(false); setWhy(null); setFDept("전체"); setFSkill("전체");
-    setTeam(TEAM_INIT); setConfirmed({}); setChecks(CHECKS.map(() => false)); setPlaced(false);
-    setWantRole(me.wantRole); setRecvRec(true); setAiExcluded({}); setRequests([]);
-    setCourseState({}); setPathSel(null);
-    toast("데이터를 초기 상태로 되돌렸습니다.");
-  };
-
   // 필터는 전 구성원(16명)을 대상으로 동작한다.
   // 프로젝트 요구조건과의 일치도가 사전 계산된 후보(SEARCH_RESULTS)는 그 값을 쓰고,
   // 나머지는 요구역량 겹침 수로 규칙 기반 일치도를 즉석 계산한다.
@@ -87,6 +79,8 @@ export default function System() {
     const pre = Object.fromEntries(SEARCH_RESULTS.map((r) => [r.id, r]));
     return EMPLOYEES
       .filter((e) => {
+        // AI 분석에 동의하지 않은 구성원은 추천 대상에서 제외한다(불이익 없음).
+        if (!e.aiConsent) return false;
         if (fDept !== "전체" && e.dept !== fDept) return false;
         if (fSkill !== "전체" && !e.skills.some(([s]) => s === fSkill)) return false;
         return true;
@@ -134,6 +128,7 @@ export default function System() {
           )); })()}
           <div className="tc-side-note">
             본 데모의 모든 인물·수치는 가상이며, 추천은 규칙 기반으로 생성된 예시입니다. 실제 AI를 호출하지 않습니다.
+            이 화면의 가상 조직(구성원 248명)은 다른 탭의 예시 기업 &lsquo;세미코어&rsquo;와 별개입니다.
           </div>
         </nav>
 
@@ -204,8 +199,8 @@ export default function System() {
 /* ═══════════ 화면 1. 통합 대시보드 ═══════════ */
 function Dash() {
   const kpi = [
-    ["248", "전체 직원"], ["37", "프로젝트 투입 가능"], ["64", "핵심역량 보유 인재"],
-    ["82%", "역량정보 업데이트율"], ["71%", "교육 추천 수락률"], ["156", "경력경로 설정 직원"],
+    ["248", "전체 구성원"], ["37", "프로젝트 투입 가능"], ["64", "핵심역량 보유 인재"],
+    ["82%", "역량정보 업데이트율"], ["71%", "교육 추천 수락률"], ["156", "경력경로 설정 구성원"],
     ["12", "추가 검토 필요(이탈위험)", "warn"],
   ];
   const dept = [["플랫폼·디지털서비스", 58], ["영업·마케팅", 38], ["경영지원(인사·재무)", 30], ["데이터·AI", 34], ["인프라·정보보안", 27], ["디자인·서비스기획", 25], ["품질·고객지원", 21], ["기획·PMO", 15]];
@@ -218,7 +213,7 @@ function Dash() {
   ];
   return (
     <>
-      <Notice>AI 추천은 인사 결정을 지원하기 위한 참고정보이며, 최종 결정은 담당자의 검토와 직원의 의사 확인을 거쳐 이루어집니다.</Notice>
+      <Notice>AI 추천은 인사 결정을 지원하기 위한 참고정보이며, 최종 결정은 담당자의 검토와 구성원의 의사 확인을 거쳐 이루어집니다.</Notice>
       <div className="tc-kpis">
         {kpi.map(([v, l, w]) => (
           <div key={l} className={`tc-kpi${w ? " warn" : ""}`}><b>{v}</b><span>{l}</span></div>
@@ -241,14 +236,14 @@ function Dash() {
             {recents.map(([t, d, s]) => <tr key={d}><td className="muted">{t}</td><td>{d}</td><td><span className="tc-badge">{s}</span></td></tr>)}
           </tbody></table>
         </Card>
-        <Card title="직원 정보 업데이트 요청">
-          <p className="tc-p">역량정보가 90일 이상 갱신되지 않은 직원 <b>45명</b>에게 업데이트 요청을 발송했습니다. 완료 31명 · 대기 14명.</p>
+        <Card title="구성원 정보 업데이트 요청">
+          <p className="tc-p">역량정보가 90일 이상 갱신되지 않은 구성원 <b>45명</b>에게 업데이트 요청을 발송했습니다. 완료 31명 · 대기 14명.</p>
           <Bar label="업데이트 완료" v={31} max={45} suffix="명" tone="mint" />
         </Card>
         <Card title="개인정보·AI 분석 동의 현황">
           <Bar label="개인정보 활용 동의" v={97} max={100} suffix="%" />
           <Bar label="AI 분석 동의" v={93} max={100} suffix="%" />
-          <p className="tc-p muted">동의하지 않은 직원은 AI 추천 대상에서 제외되며, 어떠한 불이익도 없습니다.</p>
+          <p className="tc-p muted">동의하지 않은 구성원은 AI 추천 대상에서 제외되며, 어떠한 불이익도 없습니다.</p>
         </Card>
       </div>
     </>
@@ -263,7 +258,7 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
         <div className="tc-filters">
           <label>부서
             <select value={fDept} onChange={(e) => setFDept(e.target.value)}>
-              {["전체", "경영기획실", "인사팀", "재무회계팀", "영업본부", "마케팅팀", "디자인팀", "서비스기획팀", "디지털서비스팀", "플랫폼개발팀", "데이터팀", "AI연구팀", "인프라팀", "정보보안팀", "품질관리팀", "PMO", "고객지원팀"].map((d) => <option key={d}>{d}</option>)}
+              {["전체", "인사팀", "영업본부", "마케팅팀", "디자인팀", "서비스기획팀", "디지털서비스팀", "플랫폼개발팀", "데이터팀", "AI연구팀", "인프라팀", "품질관리팀", "PMO"].map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
           <label>보유 기술
@@ -303,8 +298,11 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
                 </div>
               );
             })}
-            {!results.length && <p className="tc-p muted">필터 조건에 맞는 추천 결과가 없습니다.</p>}
+            {!results.length && <p className="tc-p muted">필터 조건에 맞는 추천 결과가 없습니다. 조건을 바꿔 다시 검색해 보세요.</p>}
           </div>
+          <p className="tc-p muted">
+            AI 분석에 동의하지 않은 구성원은 이 목록에 나타나지 않습니다. 미동의로 인한 불이익은 없습니다.
+          </p>
         </>
       )}
       {!searched && <p className="tc-p muted">조건을 고르고 검색 버튼을 누르면 프로젝트 요구조건과의 일치도 순으로 후보가 표시됩니다.</p>}
@@ -393,7 +391,7 @@ function Matching({ team, setTeam, confirmed, setConfirmed, setExcludeTarget, ch
   );
 }
 
-/* ═══════════ 화면 4. 역량 진단(직원 프로필) ═══════════ */
+/* ═══════════ 화면 5. 내 역량 프로필(구성원) ═══════════ */
 function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, setAiExcluded, requests, setRequests, toast }) {
   const inferred = [["코드 리뷰 역량", "PR 이력 기반 추론"], ["공공 도메인 이해", "프로젝트 이력 기반 추론"]];
   const managerOk = ["Java", "Spring Boot"];
@@ -407,7 +405,7 @@ function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, s
       <div className="tc-grid2">
         <Card title="기본 정보">
           <dl className="tc-dl wide">
-            <div><dt>이름</dt><dd>데모 직원 계정 (가상)</dd></div>
+            <div><dt>이름</dt><dd>데모 구성원 계정 (가상)</dd></div>
             <div><dt>직무</dt><dd>{me.role} · {me.years}년</dd></div>
             <div><dt>소속</dt><dd>{me.dept}</dd></div>
             <div><dt>희망 직무</dt>
@@ -469,14 +467,15 @@ function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, s
   );
 }
 
-/* ═══════════ 화면 5. 성장 로드맵 (역량 격차 · 교육 추천) ═══════════ */
+/* ═══════════ 화면 6. 성장 로드맵 (역량 격차 · 교육 추천) ═══════════ */
 function Training({ wantRole, me, courseState, setCourseState, toast }) {
+  const gaps = GAPS_BY_ROLE[wantRole] || GAPS;
   const set = (c, st, msg) => { setCourseState((x) => ({ ...x, [c]: st })); toast(msg); };
-  const enrolled = GAPS.filter((g) => courseState[g.course] === "enrolled");
+  const enrolled = gaps.filter((g) => courseState[g.course] === "enrolled");
   const totalHours = enrolled.reduce((a, g) => a + g.hours, 0);
   // 준비도 = 현재 수준 합 / 목표 수준 합
   const ready = Math.round(
-    (GAPS.reduce((a, g) => a + g.cur, 0) / GAPS.reduce((a, g) => a + g.target, 0)) * 100);
+    (gaps.reduce((a, g) => a + g.cur, 0) / gaps.reduce((a, g) => a + g.target, 0)) * 100);
   const strengths = me.skills.filter(([, lv]) => lv >= 4).map(([sk]) => sk);
 
   return (
@@ -496,7 +495,7 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
         <div className="tc-goal-side">
           <Ring value={ready} label="목표 대비 준비도" />
           <div className="tc-goal-stat">
-            <div><b>{GAPS.length}</b><span>보완 필요 역량</span></div>
+            <div><b>{gaps.length}</b><span>보완 필요 역량</span></div>
             <div><b>{enrolled.length}</b><span>신청한 교육</span></div>
             <div><b>{totalHours}<em>h</em></b><span>예상 학습시간</span></div>
           </div>
@@ -504,12 +503,12 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
       </section>
 
       <div className="tc-sec-head">
-        <h3>보완이 필요한 역량 {GAPS.length}개</h3>
+        <h3>보완이 필요한 역량 {gaps.length}개</h3>
         <span className="muted">우선순위는 목표 직무의 요구 수준과의 차이 순입니다.</span>
       </div>
 
       <div className="tc-gaps">
-        {GAPS.map((g, i) => {
+        {gaps.map((g, i) => {
           const st = courseState[g.course];
           return (
             <article key={g.skill} className={`tc-gapcard${st === "enrolled" ? " on" : ""}${st === "dismissed" ? " off" : ""}`}>
@@ -584,11 +583,11 @@ function Ring({ value, label }) {
   );
 }
 
-/* ═══════════ 화면 6. 경력경로 ═══════════ */
+/* ═══════════ 화면 7. 경력경로 ═══════════ */
 function Career({ pathSel, setPathSel, toast }) {
   return (
     <>
-      <Notice>경력경로는 AI가 확정하는 것이 아니라 직원이 참고하고 선택하는 추천정보입니다. 선택·수정 권한은 본인에게 있습니다.</Notice>
+      <Notice>경력경로는 AI가 확정하는 것이 아니라 구성원이 참고하고 선택하는 추천정보입니다. 선택·수정 권한은 본인에게 있습니다.</Notice>
       <div className="tc-cards three">
         {PATHS.map((p) => (
           <div key={p.key} className={`tc-person path${pathSel === p.key ? " sel" : ""}`}>
@@ -618,15 +617,15 @@ function Career({ pathSel, setPathSel, toast }) {
   );
 }
 
-/* ═══════════ 화면 7. 인재 유지관리 ═══════════ */
+/* ═══════════ 화면 4. 인재 유지관리 ═══════════ */
 function Retention() {
   return (
     <>
-      <Notice>본 정보는 직원에 대한 불이익이나 퇴사 가능성 판단에 사용되지 않으며, 성장기회와 경력지원을 제공하기 위한 참고정보입니다.</Notice>
+      <Notice>본 정보는 구성원에 대한 불이익이나 퇴사 가능성 판단에 사용되지 않으며, 성장기회와 경력지원을 제공하기 위한 참고정보입니다.</Notice>
       <Card title="성장지원 필요 신호">
         <p className="tc-p muted">확인 항목: 최근 프로젝트 기회 부족 · 희망 직무와 현재 업무 불일치 · 장기간 교육 참여 부재 · 보유역량 대비 낮은 역할 활용도 · 경력개발 면담 필요 · 본인이 제출한 성장 관련 의견</p>
         <table className="tc-table lines">
-          <thead><tr><th>직원</th><th>확인된 신호</th><th>상태</th><th>지원 방안</th></tr></thead>
+          <thead><tr><th>구성원</th><th>확인된 신호</th><th>상태</th><th>지원 방안</th></tr></thead>
           <tbody>
             {RETENTION.map((r) => {
               const e = empById(r.id);
@@ -641,7 +640,7 @@ function Retention() {
             })}
           </tbody>
         </table>
-        <p className="tc-p muted">직원을 위험점수로 줄 세우지 않고, 필요한 지원의 종류로만 분류합니다.</p>
+        <p className="tc-p muted">구성원을 위험점수로 줄 세우지 않고, 필요한 지원의 종류로만 분류합니다.</p>
       </Card>
     </>
   );
@@ -650,22 +649,22 @@ function Retention() {
 /* ═══════════ 화면 8. 공정성·신뢰센터 ═══════════ */
 function Fairness({ toast }) {
   const metrics = [
-    ["AI 추천 설명 제공률", 100], ["직원 정보 확인률", 82], ["이의제기 처리율", 94],
-    ["관리자 최종검토율", 100], ["추천 데이터 최신성(90일 내)", 76], ["개인정보 활용 동의율", 97],
+    ["AI 추천 설명 제공률", 100], ["구성원 정보 확인률", 82], ["이의제기 처리율", 94],
+    ["관리자 최종검토율", 100], ["추천 데이터 최신성(90일 내)", 82], ["개인정보 활용 동의율", 97],
   ];
   return (
     <>
       <div className="tc-grid2">
         <Card title="신뢰 지표">
           {metrics.map(([n, v]) => <Bar key={n} label={n} v={v} max={100} suffix="%" tone={v < 80 ? "orange" : "mint"} />)}
-          <p className="tc-p muted">프로젝트 추천 기회 분포: 상위 20% 직원에게 추천의 34%가 집중되어 있습니다. 아래 점검 결과를 참조하세요.</p>
+          <p className="tc-p muted">프로젝트 추천 기회 분포: 상위 20% 구성원에게 추천의 34%가 집중되어 있습니다. 아래 점검 결과를 참조하세요.</p>
         </Card>
         <Card title="추천 결과 편향 점검" tone="warn">
           <p className="tc-p"><span className="tc-badge orange big">전체 상태: 주의 필요</span></p>
           <ul className="tc-ul">
             <li>특정 부서(플랫폼개발팀)의 프로젝트 추천 기회 편중 가능성 발견</li>
-            <li>일부 직원의 역량정보가 오래되어 추천 정확도 저하 가능</li>
-            <li>교육 참여 이력이 많은 직원에게 추천이 집중될 가능성</li>
+            <li>역량정보가 90일 이상 갱신되지 않은 구성원 45명, 추천 정확도 저하 가능</li>
+            <li>교육 참여 이력이 많은 구성원에게 추천이 집중될 가능성</li>
           </ul>
           <p className="tc-p"><b>개선조치</b>: 정보 업데이트 요청 발송, 추천 기준 재검토, 관리자 교차검토 시행</p>
         </Card>
@@ -674,7 +673,7 @@ function Fairness({ toast }) {
           <p className="tc-p"><b>사용하지 않는 민감정보</b>: 성별, 연령, 출신지역, 출신학교, 가족관계, 노조 가입 여부, 건강 정보, 평가·근태 기록</p>
           <p className="tc-p muted">추천 기준: 프로젝트 요구조건과 등록된 역량정보의 일치 정도(규칙 기반). 데이터 보유기간: 퇴직 후 3년, 이후 파기.</p>
         </Card>
-        <Card title="직원의 권리">
+        <Card title="구성원의 권리">
           <div className="tc-row wrap">
             {["내 정보 열람 요청", "정보 수정 요청", "정보 삭제 요청", "AI 추천 이의제기"].map((b) => (
               <button key={b} className="tc-btn ghost" onClick={() => toast(`'${b}'가 접수되었습니다. 담당자가 7일 이내에 처리합니다.`)}>{b}</button>
@@ -687,13 +686,13 @@ function Fairness({ toast }) {
   );
 }
 
-/* ═══════════ 화면 10. 시스템 안내 ═══════════ */
+/* ═══════════ 화면 9. 시스템 안내 ═══════════ */
 function About() {
   const flow = [
-    ["기존 문제", ["내부 인재정보의 분산", "인력배치의 경험 의존", "직원별 경력개발 지원의 한계", "핵심역량 활용 부족", "구성원의 AI 인사결정에 대한 우려"]],
+    ["기존 문제", ["내부 인재정보의 분산", "인력배치의 경험 의존", "구성원별 경력개발 지원의 한계", "핵심역량 활용 부족", "구성원의 AI 인사결정에 대한 우려"]],
     ["AI 지원", ["역량정보 통합", "사내 인재 탐색", "프로젝트 추천", "교육·경력경로 추천", "성장지원 필요 신호 확인"]],
-    ["필수 도입조건", ["직원의 사전 동의", "설명 가능한 추천", "정보 열람·수정권", "공정성 점검", "개인정보 최소 활용", "직원의 선택권", "관리자의 최종검토", "이의제기·재검토 절차"]],
-    ["기대효과", ["내부 인재 발견 가능성 향상", "프로젝트 배치 의사결정 지원", "개인 맞춤형 교육 제공 가능", "직원의 경력개발 지원", "조직의 역량 현황 파악", "인재 유지관리 지원 가능성"]],
+    ["필수 도입조건", ["구성원의 사전 동의", "설명 가능한 추천", "정보 열람·수정권", "공정성 점검", "개인정보 최소 활용", "구성원의 선택권", "관리자의 최종검토", "이의제기·재검토 절차"]],
+    ["기대효과", ["내부 인재 발견 가능성 향상", "프로젝트 배치 의사결정 지원", "개인 맞춤형 교육 제공 가능", "구성원의 경력개발 지원", "조직의 역량 현황 파악", "인재 유지관리 지원 가능성"]],
   ];
   return (
     <>
