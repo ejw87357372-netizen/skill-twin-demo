@@ -189,7 +189,7 @@ function forceLayout(nodes, edges, W, H, seed = 20260810) {
   });
   const E = edges.filter(([a, b]) => a in idx && b in idx).map(([a, b]) => [idx[a], idx[b]]);
   const k = Math.sqrt((W * H) / N) * 1.02;  // 이상적인 노드 간 거리 (라벨이 겹치지 않을 만큼)
-  const cut = k * 3.2;                       // 이 거리 밖에서는 밀어내지 않음(분리된 덩어리가 튀는 것 방지)
+  const cut = k * 4.2;                       // 이 거리 밖에서는 밀어내지 않음(분리된 덩어리가 튀는 것 방지)
   let temp = W / 8;
 
   for (let step = 0; step < 520; step++) {
@@ -217,8 +217,8 @@ function forceLayout(nodes, edges, W, H, seed = 20260810) {
     }
     // 중심으로 약하게 수렴 + 이동량 제한(냉각)
     for (let i = 0; i < N; i++) {
-      disp[i].x += (W / 2 - P[i].x) * 0.09;   // 중력 — 연결이 없는 덩어리도 화면 안에 모은다
-      disp[i].y += (H / 2 - P[i].y) * 0.09;
+      disp[i].x += (W / 2 - P[i].x) * 0.13;   // 중력 — 연결이 없는 덩어리도 화면 안에 모은다
+      disp[i].y += (H / 2 - P[i].y) * 0.13;
       const d = Math.hypot(disp[i].x, disp[i].y) || 0.01;
       P[i].x += (disp[i].x / d) * Math.min(d, temp);
       P[i].y += (disp[i].y / d) * Math.min(d, temp);
@@ -269,31 +269,46 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
     for (const ch of t) w += /[\u3131-\uD79D]/.test(ch) ? fs * 0.98 : fs * 0.54;
     return w;
   };
-  const placed = [];
   const overlaps = (a, b) =>
     a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
-  const labelDy = {};
+  // 원(노드)도 장애물이다. 라벨이 다른 점 위에 얹히지 않도록 먼저 자리를 채워 둔다.
+  const placed = skills
+    .filter((s2) => pos[s2.id])
+    .map((s2) => {
+      const q = pos[s2.id], rr = r(s2.id) + 2.5;
+      return { x0: q.x - rr, x1: q.x + rr, y0: q.y - rr, y1: q.y + rr };
+    });
+  const labelPos = {};
   const order = [...skills]
-    .filter((s) => pos[s.id])
+    .filter((s2) => pos[s2.id])
     .sort((a, b) => deg[b.id] - deg[a.id]);
-  for (const s of order) {
-    const p = pos[s.id];
-    const big = deg[s.id] >= maxDeg * 0.5;
+  for (const s2 of order) {
+    const q = pos[s2.id];
+    const big = deg[s2.id] >= maxDeg * 0.5;
     const fs = big ? 11.5 : 9.5;
-    const w = textW(s.name, fs) + 6;
-    const rad = r(s.id);
-    // 위 → 아래 → 더 위 → 더 아래 순으로 빈 자리를 찾는다
-    const cands = [-rad - 6, rad + 13, -rad - 19, rad + 26, -rad - 32, rad + 39];
-    let dy = cands[0], ok = false;
+    const w = textW(s2.name, fs) + 7;
+    const rad = r(s2.id);
+    // 위·아래를 먼저 보고, 막히면 좌우로 비켜 놓는다. 좌우까지 막히면 더 멀리 나간다.
+    const cands = [];
+    for (const d of [6, 20, 34, 48, 64]) {
+      cands.push({ dx: 0, dy: -rad - d }, { dx: 0, dy: rad + d + 8 });
+    }
+    for (const d of [8, 24, 42]) {
+      const off = rad + d + w / 2;
+      cands.push({ dx: off, dy: 3.5 }, { dx: -off, dy: 3.5 });
+      cands.push({ dx: off, dy: -rad - 8 }, { dx: -off, dy: -rad - 8 });
+    }
+    let chosen = null;
     for (const c of cands) {
-      const box = { x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y + c - fs, y1: p.y + c + 3 };
-      if (!placed.some((q) => overlaps(box, q))) { dy = c; ok = true; placed.push(box); break; }
+      const box = { x0: q.x + c.dx - w / 2, x1: q.x + c.dx + w / 2,
+                    y0: q.y + c.dy - fs, y1: q.y + c.dy + 3 };
+      // 캔버스를 벗어나는 자리는 쓰지 않는다
+      if (box.x0 < 4 || box.x1 > W - 4 || box.y0 < 4 || box.y1 > H - 4) continue;
+      if (placed.some((z) => overlaps(box, z))) continue;
+      chosen = c; placed.push(box); break;
     }
-    // 어디에도 못 놓으면 연결이 적은 노드의 라벨은 생략한다(호버 시 title로 보인다)
-    labelDy[s.id] = ok ? dy : (big ? cands[0] : null);
-    if (!ok && big) {
-      placed.push({ x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y + cands[0] - fs, y1: p.y + cands[0] + 3 });
-    }
+    // 끝내 자리가 없으면 라벨을 생략한다(마우스를 올리면 title로 보인다)
+    labelPos[s2.id] = chosen;
   }
 
   // 스크롤 진입: 작은 구(globe) 형태로 뭉쳐 있던 노드들이 은하가 펼쳐지듯 제자리로 퍼진다.
@@ -338,9 +353,9 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
                   fill={catColor[s.cat] || "var(--series-1)"}
                   stroke="var(--surface-1)" strokeWidth="1.5"
                 />
-                {labelDy[s.id] != null && (
+                {labelPos[s.id] && (
                   <text
-                    x={0} y={labelDy[s.id]}
+                    x={labelPos[s.id].dx} y={labelPos[s.id].dy}
                     textAnchor="middle" fontSize={big ? 11.5 : 9.5}
                     fontWeight={big ? 600 : 400}
                     fill={big ? "var(--ink-1)" : "var(--ink-muted)"}

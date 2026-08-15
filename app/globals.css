@@ -506,7 +506,7 @@ select {
 }
 .section-head p { color: var(--ink-2); font-size: 15.5px; max-width: 660px; margin: 0; }
 
-.process { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.process { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 @media (max-width: 900px) { .process { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 520px) { .process { grid-template-columns: repeat(2, 1fr); } }
 .step {

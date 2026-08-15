@@ -10,10 +10,9 @@ import HeroMark from "@/components/HeroMark";
 const PROCESS = [
   ["01", "문헌 검토", "UTAUT·프라이버시·알고리즘 공정성 선행연구", "done"],
   ["02", "프로토타입", "수용성·스킬 진단 웹 도구 구현", "done"],
-  ["03", "기업 사례 분석", "AI 인재관리 도입 전후 비교, 국내 핵심 인재 이동 사례", "now"],
-  ["04", "심층 인터뷰", "AI 교육·인사 담당자 대상 질적 조사", "todo"],
-  ["05", "설문조사", "도입 전 구성원 수용 요인, 목표 150명", "now"],
-  ["06", "분석·제언", "위계적 회귀 후 시스템 구축 방향 도출", "todo"],
+  ["03", "심층 인터뷰", "AI 교육·인사 담당자 대상 질적 조사", "todo"],
+  ["04", "설문조사", "도입 전 구성원 수용 요인, 목표 150명", "now"],
+  ["05", "분석·제언", "위계적 회귀 후 시스템 구축 방향 도출", "todo"],
 ];
 
 const FEATURES = [
@@ -102,8 +101,8 @@ export default function Home() {
       <Reveal>
         <div className="section-head">
           <div className="eyebrow">Research Process</div>
-          <h2>연구는 여섯 단계로 진행됩니다</h2>
-          <p>지금은 기업 사례 분석과 설문조사를 병행하는 단계입니다. 조사가 끝나면 분석 결과를 바탕으로 시스템 구축 방향을 제시합니다.</p>
+          <h2>연구는 다섯 단계로 진행됩니다</h2>
+          <p style={{ maxWidth: "none", whiteSpace: "nowrap" }}>지금은 설문조사를 진행하는 단계입니다. 조사가 끝나면 분석 결과를 바탕으로 시스템 구축 방향을 제시합니다.</p>
         </div>
         <div className="process">
           {PROCESS.map(([no, title, desc, status]) => (
