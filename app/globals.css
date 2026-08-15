@@ -593,3 +593,73 @@ select {
 .cta-band p { max-width: 560px; margin-left: auto; margin-right: auto; }
 .cta-band .btn { background: #fff; color: #14243f; }
 .cta-band .btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,0.45); }
+
+/* ── 스킬 진단: 직무 선택 · 스킬 선택 ─────────────────────────────
+   카드 높이와 칩 높이를 고정해 줄마다 간격이 흔들리지 않게 한다 */
+.sc-groups { display: flex; flex-direction: column; gap: 26px; margin-top: 18px; }
+.sc-group-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding-bottom: 8px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--grid);
+}
+.sc-group-head strong { font-size: 14px; letter-spacing: -0.2px; }
+.sc-group-head span { font-size: 12px; color: var(--ink-muted); }
+
+.sc-roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.sc-role {
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 132px; padding: 14px 15px 13px;
+  text-align: left; font: inherit; cursor: pointer;
+  background: var(--surface-1);
+  border: 1px solid var(--axis); border-radius: 14px;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.sc-role:hover {
+  border-color: var(--series-1);
+  box-shadow: 0 6px 18px rgba(30, 52, 92, 0.08);
+  transform: translateY(-1px);
+}
+.sc-role b { font-size: 14.5px; line-height: 1.4; color: var(--ink-1); }
+.sc-role .sc-desc {
+  font-size: 12.5px; line-height: 1.6; color: var(--ink-muted);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.sc-role .sc-meta {
+  margin-top: auto; padding-top: 8px;
+  font-size: 11.5px; color: var(--ink-muted);
+  display: flex; gap: 10px; align-items: center;
+}
+.sc-role .sc-meta i { font-style: normal; color: var(--series-1); font-weight: 600; }
+
+.sc-skillgroup { margin-bottom: 18px; }
+.sc-skillgroup:last-child { margin-bottom: 0; }
+.sc-skillgroup > .sc-cat {
+  font-size: 12px; font-weight: 700; color: var(--ink-2);
+  margin-bottom: 9px; letter-spacing: -0.1px;
+}
+.sc-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 11px; box-sizing: border-box;
+  border-radius: 10px; font-size: 13px; line-height: 1;
+  border: 1px solid var(--axis); background: var(--surface-1);
+  transition: border-color .14s ease, background .14s ease;
+}
+.sc-chip:hover { border-color: var(--series-1); }
+.sc-chip.on {
+  border-color: var(--series-1);
+  background: color-mix(in srgb, var(--series-1) 8%, transparent);
+}
+.sc-chip label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap; }
+.sc-chip input { width: 14px; height: 14px; margin: 0; accent-color: var(--series-1); }
+.sc-chip select {
+  height: 26px; border-radius: 7px; font-size: 12px; padding: 0 4px;
+  border: 1px solid var(--axis); background: var(--surface-1); color: var(--ink-1);
+}
+.sc-picked {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-top: 14px;
+}
+
+@media (max-width: 900px) { .sc-roles { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) { .sc-roles { grid-template-columns: 1fr; } }

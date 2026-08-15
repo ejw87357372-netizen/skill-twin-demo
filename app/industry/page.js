@@ -36,15 +36,22 @@ export default function Industry() {
         <span className="tag">공식 통계 기반 · 산업 맥락</span>
         <h1>산업별 고용 점유율과 이직 동태</h1>
         <p>
-          스킬 기반 인재관리가 필요한 이유는 산업마다 다릅니다. 이직이 잦은 산업은 인력 공백
-          예측이, 고용이 줄어드는 산업은 리스킬링 경로 설계가 먼저입니다. 이 탭은 고용노동부
-          사업체노동력조사·경제활동인구조사(국가데이터처)·미국 BLS JOLTS의 공표 자료로 그 맥락을 보여줍니다.
+          스킬 기반 인재관리가 필요한 이유는 산업마다 다릅니다.<br />
+          이직이 잦은 산업은 인력 공백 예측이, 고용이 줄어드는 산업은 리스킬링 경로 설계가 먼저입니다.<br />
+          이 탭은 고용노동부 사업체노동력조사·경제활동인구조사(국가데이터처)·미국 BLS JOLTS의 공표 자료로 그 맥락을 보여줍니다.
         </p>
+        {/* 배지와 설명이 갈라져 읽히지 않도록 각 묶음을 통째로 흐르게 둔다(강제 줄바꿈 없음) */}
         <p className="hint" style={{ marginTop: 4 }}>
-          <span className="badge" style={{ color: "var(--good-text)", marginRight: 6 }}>공표치</span>
-          보도자료·공표 요약에서 확인한 수치 ·{" "}
-          <span className="badge" style={{ color: "var(--series-2)", margin: "0 6px" }}>예시값 · 갱신 필요</span>
-          구조 시연용 근사값이며, 발표 전 KOSIS 최신 공표치로 갱신하세요.
+          <span style={{ whiteSpace: "nowrap" }}>
+            <span className="badge" style={{ color: "var(--good-text)", marginRight: 6 }}>공표치</span>
+            보도자료·공표 요약에서 확인한 수치
+          </span>
+          <span style={{ margin: "0 8px", opacity: 0.5 }}>·</span>
+          <span style={{ whiteSpace: "nowrap" }}>
+            <span className="badge" style={{ color: "var(--series-2)", marginRight: 6 }}>예시값 · 갱신 필요</span>
+            구조 시연용 근사값이며,
+          </span>{" "}
+          발표 전 KOSIS 최신 공표치로 갱신하세요.
         </p>
       </section>
 

@@ -5,6 +5,13 @@ import { TARGET_ROLES, ALL_SKILLS, diagnose } from "@/lib/skillcheck";
 import { skillName } from "@/lib/data";
 import { RadarChart } from "@/components/charts";
 
+// 직무군 순서를 고정한다 (카탈로그 순서가 흔들리면 화면이 매번 달라 보인다)
+const GROUP_ORDER = ["설계", "공정", "품질", "데이터·AI", "경영지원"];
+const ROLE_GROUPS = GROUP_ORDER
+  .map((g) => [g, TARGET_ROLES.filter((r) => r.group === g)])
+  .filter(([, rs]) => rs.length);
+const SKILL_CATS = GROUP_ORDER;
+
 // 단계: role → skills → result
 export default function SkillCheck() {
   const [step, setStep] = useState("role");
@@ -27,7 +34,7 @@ export default function SkillCheck() {
 
   if (step === "role")
     return (
-      <div style={{ maxWidth: 760, margin: "32px auto" }}>
+      <div style={{ maxWidth: 980, margin: "32px auto" }}>
         <span className="tag">직원 관점 · 시연용 가상 직무 카탈로그</span>
         <h1 style={{ fontSize: 24, margin: "8px 0 4px" }}>스킬 진단: 희망 직무를 선택하세요</h1>
         <p className="hint">
@@ -42,18 +49,31 @@ export default function SkillCheck() {
             <span>✓ <strong>근거 공개</strong>: 준비도 계산식과 추천 이유(온톨로지 인접 관계)를 화면에 표시</span>
           </div>
         </div>
-        <div className="grid grid-3" style={{ marginTop: 14 }}>
-          {TARGET_ROLES.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => { setRoleId(r.id); setStep("skills"); }}
-              className="card"
-              style={{ textAlign: "left", cursor: "pointer", border: "1px solid var(--axis)", font: "inherit" }}
-            >
-              <span className="badge" style={{ color: "var(--series-1)", fontSize: 11.5 }}>{r.group}</span>
-              <strong style={{ display: "block", margin: "6px 0 4px" }}>{r.name}</strong>
-              <span className="hint">{r.desc}</span>
-            </button>
+        {/* 직무군으로 묶어야 18개가 한눈에 읽힌다 */}
+        <div className="sc-groups">
+          {ROLE_GROUPS.map(([group, roles]) => (
+            <section key={group}>
+              <div className="sc-group-head">
+                <strong>{group}</strong>
+                <span>{roles.length}개 직무</span>
+              </div>
+              <div className="sc-roles">
+                {roles.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => { setRoleId(r.id); setStep("skills"); }}
+                    className="sc-role"
+                  >
+                    <b>{r.name}</b>
+                    <span className="sc-desc">{r.desc}</span>
+                    <span className="sc-meta">
+                      <span>필수 스킬 <i>{r.requires.length}</i>개</span>
+                      <span>과업 <i>{r.tasks.length}</i>개</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </div>
@@ -61,8 +81,9 @@ export default function SkillCheck() {
 
   if (step === "skills") {
     const role = TARGET_ROLES.find((r) => r.id === roleId);
+    const pickedCount = Object.keys(owned).length;
     return (
-      <div style={{ maxWidth: 760, margin: "32px auto" }}>
+      <div style={{ maxWidth: 980, margin: "32px auto" }}>
         <p className="hint" style={{ marginBottom: 4 }}>
           희망 직무: <strong style={{ color: "var(--ink-1)" }}>{role.name}</strong>{" "}
           <button onClick={() => setStep("role")} style={{ background: "none", border: 0, color: "var(--series-1)", cursor: "pointer", fontSize: 12.5 }}>변경</button>
@@ -70,38 +91,42 @@ export default function SkillCheck() {
         <h1 style={{ fontSize: 24, margin: "0 0 4px" }}>보유 스킬을 선택하고 숙련도를 입력하세요</h1>
         <p className="hint">선택한 스킬마다 숙련도 1(입문)~5(전문가)를 지정합니다. 정직하게 입력할수록 진단이 정확해요.</p>
         <div className="card" style={{ marginTop: 12 }}>
-          {["설계", "공정", "품질", "데이터·AI", "경영지원"].map((cat) => (
-            <div key={cat} style={{ marginBottom: 12 }}>
-              <div className="hint" style={{ fontWeight: 600, marginBottom: 6 }}>{cat}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {ALL_SKILLS.filter((s) => s.cat === cat).map((s) => {
-                  const sel = owned[s.id] != null;
-                  return (
-                    <div key={s.id} style={{
-                      display: "flex", alignItems: "center", gap: 6, padding: "6px 10px",
-                      borderRadius: 9, fontSize: 13,
-                      border: `1px solid ${sel ? "var(--series-1)" : "var(--axis)"}`,
-                      background: sel ? "color-mix(in srgb, var(--series-1) 8%, transparent)" : "var(--surface-1)",
-                    }}>
-                      <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                        <input type="checkbox" checked={sel} onChange={() => toggle(s.id)} />
-                        {s.name}
-                      </label>
-                      {sel && (
-                        <select value={owned[s.id]} onChange={(e) => setLevel(s.id, +e.target.value)} style={{ fontSize: 12.5 }}>
-                          {[1, 2, 3, 4, 5].map((v) => <option key={v} value={v}>Lv.{v}</option>)}
-                        </select>
-                      )}
-                    </div>
-                  );
-                })}
+          {SKILL_CATS.map((cat) => {
+            const list = ALL_SKILLS.filter((s) => s.cat === cat);
+            if (!list.length) return null;
+            return (
+              <div key={cat} className="sc-skillgroup">
+                <div className="sc-cat">{cat} <span style={{ fontWeight: 500, color: "var(--ink-muted)" }}>· {list.length}개</span></div>
+                <div className="sc-chips">
+                  {list.map((s) => {
+                    const sel = owned[s.id] != null;
+                    return (
+                      <div key={s.id} className={`sc-chip${sel ? " on" : ""}`}>
+                        <label>
+                          <input type="checkbox" checked={sel} onChange={() => toggle(s.id)} />
+                          {s.name}
+                        </label>
+                        {sel && (
+                          <select value={owned[s.id]} onChange={(e) => setLevel(s.id, +e.target.value)}>
+                            {[1, 2, 3, 4, 5].map((v) => <option key={v} value={v}>Lv.{v}</option>)}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep("result")}>
-          진단 결과 보기
-        </button>
+        <div className="sc-picked">
+          <span className="hint">
+            {pickedCount ? `${pickedCount}개 스킬을 선택했습니다.` : "스킬을 하나 이상 선택하면 진단할 수 있습니다."}
+          </span>
+          <button className="btn" onClick={() => setStep("result")} disabled={!pickedCount}>
+            진단 결과 보기
+          </button>
+        </div>
       </div>
     );
   }

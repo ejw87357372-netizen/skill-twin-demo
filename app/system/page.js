@@ -468,6 +468,22 @@ function Profile({ me, wantRole, setWantRole, recvRec, setRecvRec, aiExcluded, s
 }
 
 /* ═══════════ 화면 6. 성장 로드맵 (역량 격차 · 교육 추천) ═══════════ */
+/** 교육 이미지 — 스킬명 키워드로 분류한다. 위에서부터 먼저 맞는 것이 이긴다. */
+const EDU_IMG = [
+  [/채용|면접|선발|인사|HR|평가|온보딩|보상|노무/i, "hr", "채용·인사 교육"],
+  [/리뷰|멘토|커뮤니케이션|이해관계자|리더|협업|워크숍|퍼실리/i, "people", "협업·리더십 교육"],
+  [/AI|머신러닝|딥러닝|LLM|생성형|모델링|이상탐지/i, "ai", "AI·머신러닝 교육"],
+  [/설비|공정|계측|검사|품질|신뢰성|수율|클린룸|안전/i, "process", "공정·설비 교육"],
+  [/Kubernetes|MSA|아키텍처|대용량|인프라|클라우드|보안|MLOps|배포|서빙|컨테이너|하드웨어|회로|반도체/i, "infra", "시스템·인프라 교육"],
+  [/Spark|Airflow|데이터|SQL|파이프라인|거버넌스|분석|시각화|통계|Python|원가|재무/i, "data", "데이터 분석 교육"],
+];
+function eduImg(skill, course) {
+  // 스킬명으로 먼저 분류한다. 과정명에는 "AI 서비스 설계"처럼 다른 주제어가 섞여 오분류가 난다.
+  const pick = (t) => (t ? EDU_IMG.find(([re]) => re.test(t)) : null);
+  const hit = pick(skill) || pick(course);
+  return hit ? { src: `/edu/${hit[1]}.jpg`, alt: hit[2] } : { src: "/edu/data.jpg", alt: "직무 교육" };
+}
+
 function Training({ wantRole, me, courseState, setCourseState, toast }) {
   const gaps = GAPS_BY_ROLE[wantRole] || GAPS;
   const set = (c, st, msg) => { setCourseState((x) => ({ ...x, [c]: st })); toast(msg); };
@@ -481,7 +497,7 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
   return (
     <>
       {/* 요약 헤더 */}
-      <section className="tc-goal">
+      <section className="tc-goal has-photo">
         <div className="tc-goal-main">
           <div className="tc-goal-label">목표 직무 (내 프로필에서 설정한 값)</div>
           <div className="tc-goal-role">{wantRole}</div>
@@ -512,6 +528,10 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
           const st = courseState[g.course];
           return (
             <article key={g.skill} className={`tc-gapcard${st === "enrolled" ? " on" : ""}${st === "dismissed" ? " off" : ""}`}>
+              <div className="tc-gapthumb">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={eduImg(g.skill, g.course).src} alt={eduImg(g.skill, g.course).alt} loading="lazy" />
+              </div>
               <header className="tc-gapcard-head">
                 <div>
                   <span className="tc-rank">{String(i + 1).padStart(2, "0")}</span>
@@ -587,6 +607,14 @@ function Ring({ value, label }) {
 function Career({ pathSel, setPathSel, toast }) {
   return (
     <>
+      <section className="tc-band">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/edu/hr.jpg" alt="경력 상담" />
+        <div>
+          <b>경력경로 제안</b>
+          <span>지금 위치에서 갈 수 있는 방향을 세 갈래로 정리했습니다. 선택은 본인이 합니다.</span>
+        </div>
+      </section>
       <Notice>경력경로는 AI가 확정하는 것이 아니라 구성원이 참고하고 선택하는 추천정보입니다. 선택·수정 권한은 본인에게 있습니다.</Notice>
       <div className="tc-cards three">
         {PATHS.map((p) => (
@@ -873,6 +901,17 @@ const CSS = `
 /* ── 성장 로드맵 ── */
 .tc-goal { display: flex; gap: 24px; flex-wrap: wrap; align-items: stretch;
   background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; }
+/* 헤더 배경 사진 — 글자 대비를 해치지 않도록 흰 그라데이션을 덮는다 */
+.tc-goal.has-photo { position: relative; overflow: hidden; isolation: isolate; }
+.tc-goal.has-photo::before {
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background: url("/edu/header.jpg") center 38% / cover no-repeat;
+  opacity: 0.34; filter: saturate(0.55);
+}
+.tc-goal.has-photo::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(100deg, var(--surface-1) 26%, color-mix(in srgb, var(--surface-1) 82%, transparent) 55%, color-mix(in srgb, var(--surface-1) 42%, transparent) 100%);
+}
 .tc-goal-main { flex: 1; min-width: 280px; }
 .tc-goal-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); letter-spacing: 0.3px; }
 .tc-goal-role { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; margin: 4px 0 12px; color: var(--brand); }
@@ -889,6 +928,16 @@ const CSS = `
 .tc-goal-stat b em { font-style: normal; font-size: 13px; }
 .tc-goal-stat span { display: block; font-size: 11.5px; color: var(--ink-muted); }
 
+/* 사진 밴드 — 화면 상단에 얇게 깔리는 안내 배너 */
+.tc-band { position: relative; height: 118px; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--border); margin-bottom: 4px; display: flex; align-items: flex-end; }
+.tc-band img { position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center 42%; filter: saturate(0.8); }
+.tc-band > div { position: relative; width: 100%; padding: 12px 20px;
+  background: linear-gradient(to top, rgba(14,26,48,0.82), rgba(14,26,48,0.05)); }
+.tc-band b { display: block; color: #fff; font-size: 15px; letter-spacing: -0.3px; }
+.tc-band span { display: block; color: rgba(255,255,255,0.82); font-size: 12.5px; margin-top: 2px; }
+
 .tc-sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
 .tc-sec-head h3 { margin: 0; font-size: 15px; }
 .tc-sec-head span { font-size: 12.5px; }
@@ -897,8 +946,16 @@ const CSS = `
 @media (max-width: 1180px) { .tc-gaps { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) { .tc-gaps { grid-template-columns: 1fr; } }
 .tc-gapcard { display: flex; flex-direction: column; background: var(--surface-1);
-  border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px;
-  transition: border-color 0.25s, box-shadow 0.25s; }
+  border: 1px solid var(--border); border-radius: 14px; padding: 0 18px 16px;
+  overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s; }
+/* 카드 상단 사진 — 좌우 패딩을 넘어 카드 폭을 꽉 채운다 */
+.tc-gapthumb { margin: 0 -18px 14px; height: 104px; overflow: hidden;
+  background: linear-gradient(135deg, #dbe4f2, #eef2f8); }
+.tc-gapthumb img { width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: saturate(0.86) contrast(1.02); transition: transform 0.5s ease; }
+.tc-gapcard:hover .tc-gapthumb img { transform: scale(1.045); }
+.tc-gapcard.off .tc-gapthumb img { filter: grayscale(1) opacity(0.6); }
+.tc-gapcard > header { padding-top: 2px; }
 .tc-gapcard:hover { border-color: color-mix(in srgb, var(--brand) 30%, transparent);
   box-shadow: 0 14px 30px -22px rgba(18,32,58,0.4); }
 .tc-gapcard.on { border-color: rgba(46,139,118,0.5); background: rgba(46,139,118,0.04); }

@@ -188,11 +188,11 @@ function forceLayout(nodes, edges, W, H, seed = 20260810) {
              y: H / 2 + Math.sin(a) * 90 + (rnd() - 0.5) * 40 };
   });
   const E = edges.filter(([a, b]) => a in idx && b in idx).map(([a, b]) => [idx[a], idx[b]]);
-  const k = Math.sqrt((W * H) / N) * 0.9;   // 이상적인 노드 간 거리
+  const k = Math.sqrt((W * H) / N) * 1.02;  // 이상적인 노드 간 거리 (라벨이 겹치지 않을 만큼)
   const cut = k * 3.2;                       // 이 거리 밖에서는 밀어내지 않음(분리된 덩어리가 튀는 것 방지)
   let temp = W / 8;
 
-  for (let step = 0; step < 420; step++) {
+  for (let step = 0; step < 520; step++) {
     const disp = P.map(() => ({ x: 0, y: 0 }));
     // 척력 — 모든 노드 쌍
     for (let i = 0; i < N; i++) {
@@ -242,7 +242,8 @@ function forceLayout(nodes, edges, W, H, seed = 20260810) {
 }
 
 export function OntologyGraph({ skills, edges, highlight = [] }) {
-  const W = 820, H = 620;
+  // 노드가 늘어나도 라벨이 붙지 않도록 캔버스를 함께 키운다
+  const W = 980, H = 700;
   const pos = forceLayout(skills, edges, W, H);
   const deg = {};
   for (const s of skills) deg[s.id] = 0;
