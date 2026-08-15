@@ -35,6 +35,10 @@ export default function Simulation() {
     <>
       <h1 className="section-title" style={{ fontSize: 22, marginTop: 28 }}>인력 시뮬레이션</h1>
       <p className="hint">
+        가상 조직을 대상으로 한 시나리오 계산입니다. 특정 개인의 퇴사 가능성을 예측하는 기능이 아니며,
+        결과는 인사평가·배치 결정에 사용되지 않습니다.
+      </p>
+      <p className="hint">
         기준선: {benchmark.label} 월 이직률 {benchmark.turnoverMonthlyPct}%.{" "}
         {benchmark.live ? "KOSIS API 실시간 공표치" : "폴백 예시값 (KOSIS_API_URL 설정 시 자동 갱신)"}
       </p>

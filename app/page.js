@@ -157,18 +157,21 @@ export default function Home() {
       <div className="grid grid-3">
         {FEATURES.map((f, i) => (
           <Reveal key={f.title} delay={i * 90}>
+            <div className="feature-wrap">
             <Link href={f.href} className="feature-card" style={{ display: "block" }}>
               <div className="kicker">{f.kicker}</div>
               <strong>{f.title}</strong>
               <p>{f.desc}</p>
-              {f.sub ? (
-                <span className="feature-sub">
-                  {f.sub.map(([label]) => label).join(" · ")}
-                </span>
-              ) : (
-                <span className="feature-go">바로 해보기 →</span>
-              )}
+              <span className="feature-go">바로 해보기 →</span>
             </Link>
+            {f.sub && (
+              <div className="feature-sub">
+                {f.sub.map(([label, href]) => (
+                  <Link key={href} href={href}>{label}</Link>
+                ))}
+              </div>
+            )}
+            </div>
           </Reveal>
         ))}
       </div>
@@ -178,7 +181,7 @@ export default function Home() {
         <div className="section-head">
           <div className="eyebrow">Labor Market</div>
           <h2>이직이 잦은 산업일수록 효용이 커집니다</h2>
-          <p style={{ maxWidth: "none" }}>전체 취업자 2,915.4만명(2026.6), 월 이직률 4.9%(2026.5). 고용노동부·국가데이터처·미국 BLS 공표 자료 기준입니다.</p>
+          <p style={{ maxWidth: "none" }}>전체 취업자 2,915.4만명(2026.6), 전 산업 월 이직률 4.9%(2026.5)는 국가데이터처·고용노동부 공표치입니다. 아래 산업별 수치는 상대 수준을 보이기 위한 예시값입니다.</p>
         </div>
         <div className="card">
           <HBarChart
@@ -193,7 +196,7 @@ export default function Home() {
             unit="%"
           />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
-            <span className="hint">산업별 월 이직률 기준. 출처와 국제 비교는 산업 동향에서 확인할 수 있습니다.</span>
+            <span className="hint">산업별 월 이직률(전 산업 평균만 공표치, 나머지는 예시값). 출처와 국제 비교는 산업 동향에서 확인할 수 있습니다.</span>
             <Link href="/industry" className="btn btn-ghost btn-pill">산업 동향 보기 →</Link>
           </div>
         </div>

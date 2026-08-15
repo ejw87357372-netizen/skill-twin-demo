@@ -121,7 +121,7 @@ export default function Industry() {
           <HBarChart items={sepRates} unit="%" />
           <p className="hint">
             주황 = 전 산업 평균(4.9%, 2026.5 공표) 이상. 숙박·음식, 건설처럼 이직이 잦은
-            산업일수록 인력 공백 예측(이 데모의 시뮬레이션 탭)의 효용이 커집니다.
+            산업일수록 인력 공백 예측(조직 대시보드의 인력 시뮬레이션)의 효용이 커집니다.
           </p>
         </div>
       </div>

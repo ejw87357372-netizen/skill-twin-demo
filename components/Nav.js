@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/dashboard", label: "대시보드" },
   { href: "/industry", label: "산업 동향" },
   { href: "/skill-check", label: "스킬 진단" },
+  { href: "/result", label: "연구 결과" },
 ];
 
 export default function Nav() {

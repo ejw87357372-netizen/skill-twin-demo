@@ -1,12 +1,12 @@
 # Weave — 스킬 온톨로지 인재관리 데모
 
-성균관대 AI융합운영전공 학술연구 「스킬 온톨로지 기반 AI 인재관리 시스템 직원 수용성 연구」의 데모 사이트.
+성균관대 AI융합운영전공 학술연구 「AI 기반 인재관리 시스템 구축 방향 연구: 기업 적용 사례와 도입 전 구성원 수용 요인 분석」의 데모 사이트.
 파나소닉 공장 디지털 트윈(팔란티어 파운드리)의 구조를 인사(HR)에 옮긴 시연입니다.
 
 - **조직 대시보드**: 팀×스킬 히트맵, 단일 실패점 탐지, 선제 알림 피드
 - **인재 프로필**: 직원별 스킬 프로필 + 온톨로지 그래프
 - **시뮬레이션**: 퇴사 영향 what-if, 신규 AI 프로젝트 스킬 수요, 이직률 기반 12개월 인력 전망
-- **수용성 진단(/survey)**: 연구 설문 25문항 → 수용 준비도 점수·유형·6요인 레이더 차트 즉시 제공, 동의 시 Supabase에 익명 저장 (구글폼과 문항 동일 — 이중 수집 채널)
+- **수용성 진단(/survey)**: 연구 설문 24문항 → 수용 준비도 점수·유형·6요인 레이더 차트 즉시 제공, 동의 시 Supabase에 익명 저장 (구글폼과 문항 동일 — 이중 수집 채널)
 - 직원·조직 데이터는 **전부 가상**, 업계 기준선만 공식 통계(고용노동부 사업체노동력조사) 사용
 
 스택: **Next.js 14 (App Router) + Supabase(선택) + Vercel 배포**, 차트는 무의존 인라인 SVG.
@@ -24,7 +24,7 @@ npm run dev   # http://localhost:3000
 
 ### 1. GitHub에 올리기 (설계 히스토리 저장창고)
 
-1. GitHub 로그인 후 우측 상단 **+ → New repository** → 이름 `skill-twin-demo`, **Private** 권장 → Create
+1. GitHub 로그인 후 우측 상단 **+ → New repository** → 이름 `weave`, **Private** 권장 → Create
 2. 터미널에서 이 폴더로 이동 후:
 
 ```bash
@@ -32,7 +32,7 @@ git init
 git add .
 git commit -m "Weave 데모 초기 버전"
 git branch -M main
-git remote add origin https://github.com/<내아이디>/skill-twin-demo.git
+git remote add origin https://github.com/<내아이디>/weave.git
 git push -u origin main
 ```
 
@@ -42,9 +42,9 @@ git push -u origin main
 
 1. https://vercel.com 가입 — **Continue with GitHub** 선택 (계정 연동이 한 번에 됨)
 2. 대시보드에서 **Add New → Project**
-3. 방금 만든 `skill-twin-demo` 저장소 옆 **Import** 클릭
+3. 방금 만든 `weave` 저장소 옆 **Import** 클릭
 4. Framework에 Next.js가 자동 감지됨 — 설정 그대로 **Deploy**
-5. 1~2분 뒤 `https://skill-twin-demo-xxxx.vercel.app` 주소 발급 완료
+5. 1~2분 뒤 `https://weavedemo.vercel.app` 주소 발급 완료
 
 이후 GitHub에 push할 때마다 **자동으로 재배포**됩니다. (이게 GitHub-Vercel 연동의 핵심)
 
@@ -92,7 +92,7 @@ app/
   dashboard/          조직 대시보드 (히트맵·알림)
   people/             직원 목록 · [id] 프로필+퇴사 시뮬레이션
   simulation/         수요 예측 · 인력 전망 (클라이언트)
-  survey/             수용성 진단 설문 (동의→기본정보→25문항→결과+산업 맥락)
+  survey/             수용성 진단 설문 (동의→기본정보→24문항→결과+산업 맥락)
   industry/           산업 동향 탭 (산업별 고용 점유율·입이직 동태·국제 비교)
   api/benchmarks/     KOSIS 프록시 (폴백 내장)
   api/responses/      Supabase 응답 저장 (선택)
