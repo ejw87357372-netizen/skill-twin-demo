@@ -43,7 +43,7 @@ export default function Home() {
           </div>
           <div className="hero-logo"><HeroMark /></div>
           <h1 className="hero-en">People leave.<br /><span className="grad">Skills weave.</span></h1>
-          <div className="hero-sub-ko">필요한 사람은 대개 이미 안에 있다</div>
+          <div className="hero-sub-ko">조직의 스킬을 실시간으로 읽는다</div>
           <p className="lede">
             AI 기반 인재관리 시스템의 프로토타입을 만들었습니다.<br />
             이제 남은 질문은, 구성원이 이 시스템을 받아들이는가입니다.

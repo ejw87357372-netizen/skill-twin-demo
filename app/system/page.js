@@ -13,7 +13,9 @@ import {
 const MENU_GROUPS = [
   ["관리자 화면", "admin", [
     ["dash", "통합 대시보드"], ["search", "AI 인재 탐색"],
-    ["matching", "프로젝트 매칭"], ["retention", "인재 유지관리"],
+    ["profiles", "인재 프로필"], ["skillgap", "스킬 갭 분석"],
+    ["matching", "프로젝트 매칭"], ["sim", "이탈 영향 시뮬레이션"],
+    ["retention", "인재 유지관리"],
   ]],
   ["구성원 화면", "emp", [
     ["profile", "내 역량 프로필"], ["training", "성장 로드맵"], ["career", "경력경로"],
@@ -22,7 +24,8 @@ const MENU_GROUPS = [
     ["fairness", "공정성·신뢰센터"], ["about", "시스템 안내"],
   ]],
 ];
-const AUD = { dash: "admin", search: "admin", matching: "admin", retention: "admin",
+const AUD = { dash: "admin", search: "admin", profiles: "admin", skillgap: "admin",
+  matching: "admin", sim: "admin", retention: "admin",
   profile: "emp", training: "emp", career: "emp", fairness: "all", about: "all" };
 const AUD_LABEL = {
   admin: "관리자 화면",
@@ -154,6 +157,9 @@ export default function System() {
           )}
           {screen === "training" && <Training wantRole={wantRole} me={me} courseState={courseState} setCourseState={setCourseState} toast={toast} />}
           {screen === "career" && <Career pathSel={pathSel} setPathSel={setPathSel} toast={toast} />}
+          {screen === "profiles" && <Profiles />}
+          {screen === "skillgap" && <SkillGap />}
+          {screen === "sim" && <Simulation />}
           {screen === "retention" && <Retention />}
           {screen === "fairness" && <Fairness toast={toast} />}
           {screen === "about" && <About />}
@@ -646,6 +652,247 @@ function Career({ pathSel, setPathSel, toast }) {
 }
 
 /* ═══════════ 화면 4. 인재 유지관리 ═══════════ */
+/* ── 관리자: 인재 프로필 ─────────────────────────────────────────
+   개인별 상세가 아니라 "누가 무엇을 할 수 있는가"를 훑는 목록이다.
+   AI 분석 미동의자는 추천에서 빠지지만 목록에서 지우지는 않는다(불이익 방지). */
+function Profiles() {
+  const [dept, setDept] = useState("전체");
+  const [q, setQ] = useState("");
+  const depts = ["전체", ...new Set(EMPLOYEES.map((e) => e.dept))];
+  const list = EMPLOYEES.filter((e) => {
+    if (dept !== "전체" && e.dept !== dept) return false;
+    if (!q.trim()) return true;
+    const t = `${e.name} ${e.role} ${e.dept} ${e.skills.map(([k]) => k).join(" ")}`;
+    return t.toLowerCase().includes(q.trim().toLowerCase());
+  });
+  // 역량정보가 오래된 사람은 추천 품질이 떨어진다 — 갱신 요청 대상
+  const stale = (u) => u < "2026.06.01";
+
+  return (
+    <>
+      <Notice>역량 프로필은 구성원이 직접 입력·수정한 정보입니다. 인사평가 자료가 아니며, 열람 이력은 기록됩니다.</Notice>
+      <div className="tc-filters">
+        <label>부서
+          <select value={dept} onChange={(e) => setDept(e.target.value)}>
+            {depts.map((d) => <option key={d}>{d}</option>)}
+          </select>
+        </label>
+        <label>검색
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름·직무·스킬" />
+        </label>
+        <span className="tc-filter-count">{list.length}명</span>
+      </div>
+
+      <div className="tc-cards three">
+        {list.map((e) => (
+          <div key={e.id} className="tc-person">
+            <div className="tc-person-top">
+              <div>
+                <b>{e.name}</b>
+                <span className="tc-sub">{e.dept} · {e.role} · {e.years}년차</span>
+              </div>
+              {!e.aiConsent && <span className="tc-badge">AI 분석 미동의</span>}
+            </div>
+            <div className="tc-chips small">
+              {e.skills.slice(0, 4).map(([k, lv]) => (
+                <span key={k} className="tc-chip">{k} <em>Lv.{lv}</em></span>
+              ))}
+            </div>
+            <dl className="tc-dl">
+              <div><dt>희망 직무</dt><dd>{e.wantRole}</dd></div>
+              <div><dt>투입 가능</dt><dd>{e.available}</dd></div>
+              <div><dt>정보 갱신</dt>
+                <dd className={stale(e.updated) ? "warn" : ""}>
+                  {e.updated}{stale(e.updated) ? " (갱신 요청 대상)" : ""}
+                </dd></div>
+            </dl>
+          </div>
+        ))}
+      </div>
+      <p className="tc-p muted">
+        전체 {EMPLOYEES.length}명 중 AI 분석에 동의한 구성원은 {EMPLOYEES.filter((e) => e.aiConsent).length}명입니다.
+        미동의자는 추천 대상에서 제외되며, 이 사실이 평가나 배치에 불이익으로 작용하지 않습니다.
+      </p>
+    </>
+  );
+}
+
+/* ── 관리자: 스킬 갭 분석 ────────────────────────────────────────
+   조직 전체에서 한 명만 보유한 스킬이 곧 이탈 리스크다. */
+function SkillGap() {
+  const holders = useMemo(() => {
+    const m = new Map();
+    for (const e of EMPLOYEES) {
+      for (const [sk, lv] of e.skills) {
+        if (!m.has(sk)) m.set(sk, []);
+        m.get(sk).push({ id: e.id, name: e.name, dept: e.dept, lv });
+      }
+    }
+    return [...m.entries()]
+      .map(([skill, people]) => ({
+        skill, people,
+        expert: people.filter((p) => p.lv >= 4).length,
+      }))
+      .sort((a, b) => a.people.length - b.people.length || b.expert - a.expert);
+  }, []);
+  const solo = holders.filter((h) => h.people.length === 1);
+  const thin = holders.filter((h) => h.people.length === 2);
+  const max = Math.max(...holders.map((h) => h.people.length), 1);
+
+  return (
+    <>
+      <Notice>집계는 조직 단위로만 표시합니다. 개인별 숙련도 원자료는 본인과 본인이 동의한 범위에서만 열람됩니다.</Notice>
+      <div className="tc-kpis">
+        <div className="tc-kpi"><b>{holders.length}</b><span>조직 보유 스킬 종류</span></div>
+        <div className="tc-kpi warn"><b>{solo.length}</b><span>1인 의존 스킬</span></div>
+        <div className="tc-kpi"><b>{thin.length}</b><span>2인 보유 스킬</span></div>
+      </div>
+
+      <div className="tc-sec-head">
+        <h3>1인 의존 스킬 {solo.length}개</h3>
+        <span className="muted">해당 구성원이 이탈하면 조직에서 사라지는 역량입니다.</span>
+      </div>
+      <div className="tc-cards three">
+        {solo.slice(0, 9).map((h) => (
+          <div key={h.skill} className="tc-person alert">
+            <div className="tc-person-top">
+              <b>{h.skill}</b>
+              <span className="tc-badge warn">1명</span>
+            </div>
+            <p className="tc-p" style={{ margin: "6px 0 0" }}>
+              보유자: {h.people[0].name} ({h.people[0].dept}) · 숙련도 Lv.{h.people[0].lv}
+            </p>
+            <p className="tc-p muted" style={{ margin: "6px 0 0" }}>
+              후속 육성 또는 문서화가 필요합니다.
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {solo.length > 9 && (
+        <p className="tc-p muted" style={{ marginTop: 10 }}>
+          보유자가 1명인 스킬 {solo.length}개 중 9개만 표시했습니다. 이 데모의 가상 조직은 {EMPLOYEES.length}명 규모라
+          1인 의존 비율이 실제 조직보다 높게 나타납니다.
+        </p>
+      )}
+
+      <div className="tc-sec-head" style={{ marginTop: 22 }}>
+        <h3>스킬별 보유 인원 (보유자가 적은 순 상위 24개)</h3>
+        <span className="muted">막대가 짧을수록 조직 내 대체 가능성이 낮습니다.</span>
+      </div>
+      <div className="tc-card">
+        <div className="tc-skilllist">
+          {holders.slice(0, 24).map((h) => (
+            <div key={h.skill} className="tc-skillrow">
+              <span className="tc-skillname">{h.skill}</span>
+              <div className="tc-gbar">
+                <i style={{ width: `${(h.people.length / max) * 100}%` }}
+                   className={h.people.length === 1 ? "warn" : ""} />
+              </div>
+              <span className="tc-skillnum">{h.people.length}명<em> · 숙련 {h.expert}</em></span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── 관리자: 이탈 영향 시뮬레이션 ────────────────────────────────
+   "이 사람이 나가면 무엇이 비는가"를 규칙 기반으로 계산해 보여준다. */
+function Simulation() {
+  const [target, setTarget] = useState(EMPLOYEES[0].id);
+  const me = empById(target);
+  const others = EMPLOYEES.filter((e) => e.id !== target);
+
+  const result = useMemo(() => {
+    const lost = [], weak = [];
+    for (const [sk, lv] of me.skills) {
+      const rest = others.filter((e) => e.skills.some(([k]) => k === sk));
+      const restExpert = rest.filter((e) => e.skills.some(([k, l]) => k === sk && l >= 4));
+      if (rest.length === 0) lost.push({ sk, lv });
+      else if (lv >= 4 && restExpert.length === 0) weak.push({ sk, lv, rest: rest.length });
+    }
+    // 대체 후보: 겹치는 스킬 수와 숙련도로 점수화 (규칙 기반)
+    const cand = others
+      .map((e) => {
+        let score = 0, shared = [];
+        for (const [sk, lv] of me.skills) {
+          const hit = e.skills.find(([k]) => k === sk);
+          if (hit) { score += Math.min(hit[1], lv) * 2 + (hit[1] >= lv ? 3 : 0); shared.push(sk); }
+        }
+        if (e.role === me.role) score += 6;
+        return { e, score, shared };
+      })
+      .filter((c) => c.shared.length > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+    return { lost, weak, cand };
+  }, [target, me, others]);
+
+  return (
+    <>
+      <Notice>가정 시나리오입니다. 실제 이탈 예측이 아니며, 특정 구성원에 대한 판단 근거로 사용하지 않습니다.</Notice>
+      <div className="tc-filters">
+        <label>대상 구성원
+          <select value={target} onChange={(e) => setTarget(e.target.value)}>
+            {EMPLOYEES.map((e) => (
+              <option key={e.id} value={e.id}>{e.name} · {e.dept} · {e.role}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="tc-kpis">
+        <div className="tc-kpi warn"><b>{result.lost.length}</b><span>조직에서 사라지는 스킬</span></div>
+        <div className="tc-kpi"><b>{result.weak.length}</b><span>숙련자가 없어지는 스킬</span></div>
+        <div className="tc-kpi"><b>{result.cand.length}</b><span>즉시 검토 가능한 대체 후보</span></div>
+      </div>
+
+      <div className="tc-sec-head">
+        <h3>{me.name} 님이 이탈할 경우</h3>
+        <span className="muted">{me.dept} · {me.role} · {me.years}년차</span>
+      </div>
+      <div className="tc-cards two">
+        <div className="tc-card">
+          <b>사라지는 스킬</b>
+          {result.lost.length ? (
+            <div className="tc-chips small" style={{ marginTop: 8 }}>
+              {result.lost.map(({ sk, lv }) => (
+                <span key={sk} className="tc-chip warn">{sk} <em>Lv.{lv}</em></span>
+              ))}
+            </div>
+          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>이 구성원만 보유한 스킬은 없습니다.</p>}
+          <b style={{ display: "block", marginTop: 16 }}>숙련자가 없어지는 스킬</b>
+          {result.weak.length ? (
+            <div className="tc-chips small" style={{ marginTop: 8 }}>
+              {result.weak.map(({ sk, rest }) => (
+                <span key={sk} className="tc-chip">{sk} <em>남은 보유자 {rest}명</em></span>
+              ))}
+            </div>
+          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>해당 없음.</p>}
+        </div>
+        <div className="tc-card">
+          <b>대체 후보 (규칙 기반)</b>
+          <p className="tc-p muted" style={{ margin: "4px 0 10px" }}>
+            공유 스킬 수와 숙련도 차이로 계산한 값입니다. 확정 배치가 아니라 검토 출발점입니다.
+          </p>
+          {result.cand.map(({ e, shared }) => (
+            <div key={e.id} className="tc-altrow">
+              <div>
+                <b>{e.name}</b>
+                <span className="tc-sub">{e.dept} · {e.role}</span>
+              </div>
+              <span className="tc-sub">공유 스킬 {shared.slice(0, 3).join(", ")}</span>
+            </div>
+          ))}
+          {!result.cand.length && <p className="tc-p muted">공유 스킬을 가진 구성원이 없습니다.</p>}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function Retention() {
   return (
     <>
@@ -915,6 +1162,35 @@ const CSS = `
 .tc-goal-main { flex: 1; min-width: 280px; }
 .tc-goal-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); letter-spacing: 0.3px; }
 .tc-goal-role { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; margin: 4px 0 12px; color: var(--brand); }
+/* ── 관리자 신규 화면(인재 프로필·스킬 갭·시뮬레이션) 공용 ── */
+.tc-filters input { margin-left: 6px; font: inherit; font-size: 12.5px; border: 1px solid var(--axis);
+  border-radius: 8px; padding: 4px 9px; background: var(--surface-1); color: var(--ink-1); min-width: 180px; }
+.tc-filter-count { margin-left: auto; font-weight: 700; color: var(--ink-2); }
+.tc-kpi.warn b { color: #b45f22; }
+.tc-badge.warn { background: rgba(201,106,60,0.14); color: #b45f22; }
+.tc-person.alert { border-color: rgba(201,106,60,0.4); background: rgba(201,106,60,0.035); }
+.tc-chip.warn { color: #b45f22; background: rgba(201,106,60,0.12); }
+.tc-chip em { font-style: normal; font-weight: 500; opacity: 0.72; margin-left: 3px; }
+.tc-chips.small { margin-bottom: 10px; }
+.tc-chips.small .tc-chip { font-size: 11.5px; padding: 3px 9px; }
+.tc-dl dd.warn { color: #b45f22; }
+.tc-skilllist { display: flex; flex-direction: column; }
+.tc-skillname { flex: none; width: 150px; font-size: 12.5px; color: var(--ink-2); }
+.tc-skillnum { flex: none; width: 108px; text-align: right; font-size: 12px;
+  font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.tc-skillnum em { font-style: normal; color: var(--ink-muted); }
+.tc-gbar { flex: 1; min-width: 180px; height: 10px; background: var(--grid);
+  border-radius: 99px; overflow: hidden; }
+.tc-gbar i { display: block; height: 100%; border-radius: 99px; background: var(--seq-550); }
+.tc-gbar i.warn { background: #c96a3c; }
+.tc-altrow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--grid); }
+.tc-altrow:last-child { border-bottom: 0; }
+.tc-altrow > div b, .tc-person-top > div > b { display: block; }
+.tc-altrow .tc-sub { margin-top: 1px; }
+@media (max-width: 1180px) { .tc-cards.three { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) { .tc-cards, .tc-cards.three { grid-template-columns: 1fr; } }
+
 .tc-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .tc-chip { font-size: 12px; font-weight: 600; color: #1d6a58; background: rgba(46,139,118,0.12);
   border-radius: 999px; padding: 4px 11px; }

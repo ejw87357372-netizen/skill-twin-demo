@@ -261,6 +261,41 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
   const hi = new Set(highlight);
   const r = (id) => 4 + (deg[id] / maxDeg) * 8.5 + (hi.has(id) ? 3 : 0);
 
+  // ── 라벨 겹침 제거 ──────────────────────────────────────────────
+  // 한글은 글자당 폭이 거의 1em, 영문·숫자는 그 절반쯤이다. 이 근사로 박스를 잡고
+  // 연결이 많은 노드부터 자리를 차지하게 한 뒤, 남은 노드는 위/아래로 밀어 배치한다.
+  const textW = (t, fs) => {
+    let w = 0;
+    for (const ch of t) w += /[\u3131-\uD79D]/.test(ch) ? fs * 0.98 : fs * 0.54;
+    return w;
+  };
+  const placed = [];
+  const overlaps = (a, b) =>
+    a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  const labelDy = {};
+  const order = [...skills]
+    .filter((s) => pos[s.id])
+    .sort((a, b) => deg[b.id] - deg[a.id]);
+  for (const s of order) {
+    const p = pos[s.id];
+    const big = deg[s.id] >= maxDeg * 0.5;
+    const fs = big ? 11.5 : 9.5;
+    const w = textW(s.name, fs) + 6;
+    const rad = r(s.id);
+    // 위 → 아래 → 더 위 → 더 아래 순으로 빈 자리를 찾는다
+    const cands = [-rad - 6, rad + 13, -rad - 19, rad + 26, -rad - 32, rad + 39];
+    let dy = cands[0], ok = false;
+    for (const c of cands) {
+      const box = { x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y + c - fs, y1: p.y + c + 3 };
+      if (!placed.some((q) => overlaps(box, q))) { dy = c; ok = true; placed.push(box); break; }
+    }
+    // 어디에도 못 놓으면 연결이 적은 노드의 라벨은 생략한다(호버 시 title로 보인다)
+    labelDy[s.id] = ok ? dy : (big ? cands[0] : null);
+    if (!ok && big) {
+      placed.push({ x0: p.x - w / 2, x1: p.x + w / 2, y0: p.y + cands[0] - fs, y1: p.y + cands[0] + 3 });
+    }
+  }
+
   // 스크롤 진입: 작은 구(globe) 형태로 뭉쳐 있던 노드들이 은하가 펼쳐지듯 제자리로 퍼진다.
   const GLOBE_R = 96;
   return (
@@ -303,16 +338,18 @@ export function OntologyGraph({ skills, edges, highlight = [] }) {
                   fill={catColor[s.cat] || "var(--series-1)"}
                   stroke="var(--surface-1)" strokeWidth="1.5"
                 />
-                <text
-                  x={0} y={-r(s.id) - 6}
-                  textAnchor="middle" fontSize={big ? 11.5 : 9.5}
-                  fontWeight={big ? 600 : 400}
-                  fill={big ? "var(--ink-1)" : "var(--ink-muted)"}
-                  stroke="var(--surface-1)" strokeWidth="3.5" paintOrder="stroke"
-                  data-draw="fade" style={{ animationDelay: `${1000 + si * 16}ms` }}
-                >
-                  {s.name}
-                </text>
+                {labelDy[s.id] != null && (
+                  <text
+                    x={0} y={labelDy[s.id]}
+                    textAnchor="middle" fontSize={big ? 11.5 : 9.5}
+                    fontWeight={big ? 600 : 400}
+                    fill={big ? "var(--ink-1)" : "var(--ink-muted)"}
+                    stroke="var(--surface-1)" strokeWidth="3.5" paintOrder="stroke"
+                    data-draw="fade" style={{ animationDelay: `${1000 + si * 16}ms` }}
+                  >
+                    {s.name}
+                  </text>
+                )}
               </g>
             </g>
           );
