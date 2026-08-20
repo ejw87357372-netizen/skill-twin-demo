@@ -166,7 +166,7 @@ export default function System() {
           {screen === "retention" && <Retention />}
           {screen === "fairness" && <Fairness toast={toast} />}
           {screen === "research" && <Research setScreen={setScreen} />}
-          {screen === "about" && <About />}
+          {screen === "about" && <About setScreen={setScreen} />}
         </main>
       </div>
 
@@ -401,6 +401,46 @@ function BlindSpots() {
         </label>
       ))}
     </Card>
+  );
+}
+
+/* 숙련도 레벨 정의 — SFIA(자율성·복잡성)와 NCS 수준체계를 참고해 5단계로 압축했다 */
+const LEVELS = [
+  ["1", "입문", "지시와 감독 아래 수행", "정형화된 단순 과업", "1~2수준"],
+  ["2", "보조", "일상 업무는 스스로, 판단은 확인받음", "절차가 정해진 과업", "3수준"],
+  ["3", "자립", "담당 범위를 독립적으로 수행", "일반적 문제 해결", "4~5수준"],
+  ["4", "숙련", "방향을 스스로 정하고 타인을 지도", "비정형 문제, 예외 상황 대응", "6수준"],
+  ["5", "전문", "조직 기준을 만들고 판단 근거가 됨", "새로운 방식 설계, 전사 영향", "7~8수준"],
+];
+
+function LevelGuide({ onClose }) {
+  return (
+    <Modal title="숙련도 레벨 기준" onClose={onClose}>
+      <p className="tc-p muted" style={{ marginTop: 0 }}>
+        &lsquo;얼마나 잘하는가&rsquo;가 아니라 <b>어느 정도 자율성으로 얼마나 복잡한 일을 하는가</b>로 나눕니다.
+        국제 표준 SFIA의 자율성·복잡성 축과 NCS 수준체계를 참고해 5단계로 압축했습니다.
+      </p>
+      <table className="tc-table lines lv-table">
+        <thead>
+          <tr><th>Lv</th><th>이름</th><th>자율성</th><th>복잡성</th><th>NCS</th></tr>
+        </thead>
+        <tbody>
+          {LEVELS.map(([lv, name, auto, cx, ncs]) => (
+            <tr key={lv} className={lv === "4" ? "alt" : ""}>
+              <td className="lv-no">{lv}</td>
+              <td><b>{name}</b></td>
+              <td className="small">{auto}</td>
+              <td className="small">{cx}</td>
+              <td className="small muted">{ncs}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="tc-p muted" style={{ marginBottom: 0 }}>
+        이 화면에서 <b>숙련자</b>는 레벨 4 이상을 말합니다. 남을 지도할 수 있어야 공백을 메울 수 있다고 보기 때문입니다.
+        NCS 대응은 참고용 근사이며 공식 매핑이 아닙니다.
+      </p>
+    </Modal>
   );
 }
 
@@ -986,6 +1026,7 @@ function Profiles() {
 /* ── 관리자: 스킬 갭 분석 ────────────────────────────────────────
    조직 전체에서 한 명만 보유한 스킬이 곧 이탈 리스크다. */
 function SkillGap() {
+  const [guide, setGuide] = useState(false);
   const holders = useMemo(() => {
     const m = new Map();
     for (const e of EMPLOYEES) {
@@ -1007,7 +1048,13 @@ function SkillGap() {
 
   return (
     <>
-      <Notice>집계는 조직 단위로만 표시합니다. 개인별 숙련도 원자료는 본인과 본인이 동의한 범위에서만 열람됩니다.</Notice>
+      <div className="tc-topbar">
+        <Notice>집계는 조직 단위로만 표시합니다. 개인별 숙련도 원자료는 본인과 본인이 동의한 범위에서만 열람됩니다.</Notice>
+        <button className="tc-btn tiny ghost tc-guide-btn" onClick={() => setGuide(true)}>
+          <span aria-hidden="true">?</span> 숙련도 기준
+        </button>
+      </div>
+      {guide && <LevelGuide onClose={() => setGuide(false)} />}
       <div className="tc-kpis">
         <div className="tc-kpi"><b>{holders.length}</b><span>조직 보유 스킬 종류</span></div>
         <div className="tc-kpi warn"><b>{solo.length}</b><span>1인 의존 스킬</span></div>
@@ -1319,22 +1366,154 @@ function Fairness({ toast }) {
   );
 }
 
-/* ═══════════ 화면 9. 시스템 안내 ═══════════ */
-function About() {
-  const flow = [
-    ["기존 문제", ["내부 인재정보의 분산", "인력배치의 경험 의존", "구성원별 경력개발 지원의 한계", "핵심역량 활용 부족", "구성원의 AI 인사결정에 대한 우려"]],
-    ["AI 지원", ["역량정보 통합", "사내 인재 탐색", "프로젝트 추천", "교육·경력경로 추천", "성장지원 필요 신호 확인"]],
-    ["필수 도입조건", ["구성원의 사전 동의", "설명 가능한 추천", "정보 열람·수정권", "공정성 점검", "개인정보 최소 활용", "구성원의 선택권", "관리자의 최종검토", "이의제기·재검토 절차"]],
-    ["기대효과", ["내부 인재 발견 가능성 향상", "프로젝트 배치 의사결정 지원", "개인 맞춤형 교육 제공 가능", "구성원의 경력개발 지원", "조직의 역량 현황 파악", "인재 유지관리 지원 가능성"]],
+/* ═══════════ 화면. 시스템 안내 ═══════════ */
+const FLOW = [
+  ["기존 문제", "지금 무엇이 안 되는가",
+    ["내부 인재정보가 흩어져 있다", "인력배치가 담당자 경험에 의존한다",
+     "구성원별 경력개발 지원이 어렵다", "핵심역량이 활용되지 못한다",
+     "AI 인사결정에 대한 우려가 있다"]],
+  ["AI가 하는 일", "무엇을 자동화하는가",
+    ["흩어진 역량정보를 하나로 모은다", "조건에 맞는 사내 인재를 찾는다",
+     "프로젝트에 맞는 후보를 추천한다", "역량 격차와 교육·경력경로를 제시한다",
+     "성장지원이 필요한 신호를 알린다"]],
+  ["도입 조건", "무엇이 갖춰져야 하는가",
+    ["구성원의 사전 동의", "설명 가능한 추천", "정보 열람·수정권",
+     "정기적인 공정성 점검", "개인정보 최소 활용", "구성원의 선택권",
+     "관리자의 최종검토", "이의제기·재검토 절차"]],
+  ["기대 효과", "무엇이 달라지는가",
+    ["내부 인재를 발견할 가능성이 커진다", "배치 의사결정에 근거가 생긴다",
+     "개인에게 맞는 교육을 제공할 수 있다", "구성원의 경력개발을 지원한다",
+     "조직의 역량 현황을 파악할 수 있다"]],
+];
+
+const LAYERS = [
+  ["01", "수집", "인사·교육·프로젝트 시스템에서 데이터를 가져온다",
+    "ERP · 그룹웨어 · 교육관리시스템 · 프로젝트 관리도구", "후속 과제"],
+  ["02", "정규화", "서로 다르게 기록된 직무와 역량을 하나의 기준으로 잇는다",
+    "스킬 온톨로지 (직무군–직무–과업–스킬)", "반영"],
+  ["03", "추론", "역량 수준을 추정하고 적합한 인재·교육을 추천한다",
+    "규칙 기반 매칭 (이 데모는 실제 AI를 호출하지 않는다)", "반영"],
+  ["04", "검증", "구성원이 확인·수정하고 담당자가 최종 검토한다",
+    "본인 확인 · 이의제기 · SME 검토 · 결정 기록", "반영"],
+];
+
+const PRINCIPLES = [
+  ["모든 인물과 수치는 가상입니다", "실제 기업이나 개인의 데이터가 아닙니다."],
+  ["아무 정보도 수집하지 않습니다", "이 화면에서 입력한 값은 브라우저 안에서만 처리됩니다."],
+  ["인사평가에 쓰이지 않습니다", "진단 결과는 개인에 대한 확정적 판단이 아닙니다."],
+  ["추천에는 근거가 따라옵니다", "적합도만 주지 않고 무엇을 보고 판단했는지 함께 보여줍니다."],
+  ["최종 결정은 사람이 합니다", "AI 추천과 다른 결정을 내렸다면 사유를 기록합니다."],
+];
+
+function About({ setScreen }) {
+  const map = [
+    ["관리자 화면", "admin", [
+      ["dash", "통합 대시보드", "조직 전체의 역량 현황과 지표"],
+      ["search", "AI 인재 탐색", "조건에 맞는 사내 인재 찾기"],
+      ["profiles", "인재 프로필", "구성원별 역량·경력 정보"],
+      ["skillgap", "스킬 갭 분석", "1인 의존 역량과 보유 분포"],
+      ["matching", "프로젝트 매칭", "팀 구성안과 공정성 점검"],
+      ["decisions", "결정 기록", "AI 추천과 최종 결정의 차이"],
+      ["sim", "이탈 영향 시뮬레이션", "직군별 위험과 개인 단위 영향"],
+      ["retention", "인재 유지관리", "성장지원이 필요한 신호"],
+    ]],
+    ["구성원 화면", "emp", [
+      ["profile", "내 역량 프로필", "내 정보 확인·수정·분석 제외"],
+      ["training", "성장 로드맵", "목표 직무까지의 역량 격차와 학습 방법"],
+      ["career", "경력경로", "지금 위치에서 갈 수 있는 방향"],
+    ]],
+    ["공통 화면", "all", [
+      ["fairness", "공정성·신뢰센터", "추천 기준과 구성원의 권리"],
+      ["research", "인터뷰 반영 내역", "현직자 요건이 어느 화면이 되었는지"],
+    ]],
   ];
+
   return (
     <>
-      <Notice>연구(AI 기반 인재관리 시스템 구축 방향 연구: 기업 적용 사례와 도입 전 구성원 수용 요인 분석)의 결론을 사용자 경험으로 옮긴 데모입니다. AI는 의사결정을 지원할 뿐, 최종 결정은 사람이 검토합니다.</Notice>
-      <div className="tc-flow">
-        {flow.map(([t, items], i) => (
-          <div key={t} className="tc-flowcol">
-            <div className="tc-flowhead">{i + 1}. {t}</div>
-            <ul className="tc-ul">{items.map((x) => <li key={x}>{x}</li>)}</ul>
+      <section className="ab-hero">
+        <div className="ab-hero-main">
+          <span className="ab-eyebrow">System Guide</span>
+          <h2>사람의 가능성과 조직의 기회를 연결합니다</h2>
+          <p>
+            구성원의 스킬·경력·교육 이력을 하나로 모아 사내 인재를 찾고, 역량 격차를 진단하고,
+            교육과 경력경로를 제안하는 시스템입니다. 이 화면들은 연구
+            「AI 기반 인재관리 시스템 구축 방향 연구」의 결론을 사용자 경험으로 옮긴 데모입니다.
+          </p>
+          <p className="ab-note">
+            AI는 의사결정을 대신하지 않습니다. 후보와 근거를 제시할 뿐이고, 최종 결정은 사람이 검토합니다.
+          </p>
+        </div>
+        <dl className="ab-facts">
+          <div><dt>연구 기관</dt><dd>성균관대학교 AI융합운영전공</dd></div>
+          <div><dt>연구 방법</dt><dd>기업 사례 분석 · 실무자 심층 인터뷰 · 재직자 설문</dd></div>
+          <div><dt>이론 모형</dt><dd>확장 UTAUT (＋프라이버시 우려 · 알고리즘 공정성 인식)</dd></div>
+          <div><dt>데이터</dt><dd>전부 가상 · 업계 기준선만 공식 통계 인용</dd></div>
+        </dl>
+      </section>
+
+      <div className="tc-sec-head">
+        <h3>문제에서 효과까지</h3>
+        <span className="muted">왼쪽에서 오른쪽으로 읽으면 이 시스템이 왜 필요한지가 이어집니다.</span>
+      </div>
+      <div className="ab-flow">
+        {FLOW.map(([t, sub, items], i) => (
+          <div key={t} className="ab-flowcol">
+            <div className="ab-flowhead">
+              <span className="ab-step">{i + 1}</span>
+              <div><b>{t}</b><em>{sub}</em></div>
+            </div>
+            <ul>{items.map((x) => <li key={x}>{x}</li>)}</ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="tc-sec-head" style={{ marginTop: 24 }}>
+        <h3>데이터는 네 층을 지납니다</h3>
+        <span className="muted">심층 인터뷰에서 나온 &lsquo;검증 없이는 신뢰할 수 없다&rsquo;는 요구를 구조에 넣었습니다.</span>
+      </div>
+      <div className="ab-layers">
+        {LAYERS.map(([no, name, desc, src, st]) => (
+          <div key={no} className={`ab-layer${st === "후속 과제" ? " todo" : ""}`}>
+            <div className="ab-layer-no">{no}</div>
+            <div className="ab-layer-body">
+              <b>{name}</b>
+              <p>{desc}</p>
+              <span className="ab-src">{src}</span>
+            </div>
+            <span className={`tc-badge ${st === "반영" ? "mint" : "orange"}`}>{st}</span>
+          </div>
+        ))}
+      </div>
+      <p className="tc-p muted">
+        네 번째 층(검증)을 부가 기능이 아니라 구조의 일부로 둔 것이 이 연구의 핵심 제언입니다.
+      </p>
+
+      <div className="tc-sec-head" style={{ marginTop: 24 }}>
+        <h3>화면 안내</h3>
+        <span className="muted">이름을 누르면 해당 화면으로 이동합니다.</span>
+      </div>
+      <div className="ab-map">
+        {map.map(([label, aud, items]) => (
+          <div key={label} className="ab-mapcol">
+            <div className={`ab-maphead ${aud}`}>{label}</div>
+            {items.map(([k, name, desc]) => (
+              <button key={k} className="ab-mapitem" onClick={() => setScreen(k)}>
+                <b>{name}</b>
+                <span>{desc}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div className="tc-sec-head" style={{ marginTop: 24 }}>
+        <h3>이 데모가 지키는 것</h3>
+      </div>
+      <div className="ab-rules">
+        {PRINCIPLES.map(([t, d]) => (
+          <div key={t} className="ab-rule">
+            <i>✓</i>
+            <div><b>{t}</b><span>{d}</span></div>
           </div>
         ))}
       </div>
@@ -1670,10 +1849,86 @@ const CSS = `
 .tc-scale label.on { background: var(--brand); color: #fff; border-color: var(--brand); font-weight: 700; }
 .tc-scale input { display: none; }
 
-.tc-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-@media (max-width: 980px) { .tc-flow { grid-template-columns: 1fr 1fr; } }
-.tc-flowcol { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-.tc-flowhead { font-weight: 800; font-size: 14px; margin-bottom: 6px; color: var(--brand); }
+/* 상단 안내줄 + 우측 작은 버튼 */
+.tc-topbar { display: flex; align-items: stretch; gap: 10px; }
+.tc-topbar .tc-notice { flex: 1; }
+.tc-guide-btn { flex: none; align-self: center; white-space: nowrap; display: inline-flex;
+  align-items: center; gap: 6px; }
+.tc-guide-btn span { display: inline-grid; place-items: center; width: 15px; height: 15px;
+  border-radius: 99px; background: var(--surface-2); font-size: 10.5px; font-weight: 800; }
+@media (max-width: 720px) { .tc-topbar { flex-direction: column; align-items: flex-start; } }
+.lv-table td, .lv-table th { vertical-align: middle; }
+.lv-no { font-weight: 800; color: var(--brand); font-variant-numeric: tabular-nums; }
+
+/* ── 시스템 안내 ─────────────────────────────────────────────── */
+.ab-hero { display: grid; grid-template-columns: 1.5fr 1fr; gap: 26px;
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 18px; padding: 26px 28px; }
+@media (max-width: 980px) { .ab-hero { grid-template-columns: 1fr; gap: 18px; } }
+.ab-eyebrow { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--brand); margin-bottom: 8px; }
+.ab-hero-main h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: -0.9px; line-height: 1.35; }
+.ab-hero-main p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.85; color: var(--ink-2); }
+.ab-note { padding-left: 12px; border-left: 3px solid color-mix(in srgb, var(--brand) 40%, transparent);
+  color: var(--ink-1) !important; font-weight: 600; }
+.ab-facts { margin: 0; align-self: center; }
+.ab-facts > div { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 12.5px; }
+.ab-facts > div:last-child { border-bottom: 0; }
+.ab-facts dt { flex: none; width: 72px; color: var(--ink-muted); }
+.ab-facts dd { margin: 0; color: var(--ink-2); }
+
+.ab-flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 1080px) { .ab-flow { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .ab-flow { grid-template-columns: 1fr; } }
+.ab-flowcol { position: relative; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px 18px; }
+.ab-flowcol::after { content: "→"; position: absolute; right: -13px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-muted); font-size: 14px; z-index: 1; }
+.ab-flowcol:last-child::after { display: none; }
+@media (max-width: 1080px) { .ab-flowcol::after { display: none; } }
+.ab-flowhead { display: flex; gap: 10px; align-items: flex-start;
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--grid); }
+.ab-step { flex: none; width: 22px; height: 22px; border-radius: 99px; background: var(--brand); color: #fff;
+  font-size: 11.5px; font-weight: 800; display: grid; place-items: center; }
+.ab-flowhead b { display: block; font-size: 14px; letter-spacing: -0.3px; }
+.ab-flowhead em { display: block; font-style: normal; font-size: 11.5px; color: var(--ink-muted); margin-top: 1px; }
+.ab-flowcol ul { list-style: none; margin: 0; padding: 0; }
+.ab-flowcol li { position: relative; padding-left: 13px; font-size: 12.5px; line-height: 1.65;
+  color: var(--ink-2); margin-bottom: 6px; }
+.ab-flowcol li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px;
+  border-radius: 99px; background: var(--axis); }
+
+.ab-layers { display: flex; flex-direction: column; gap: 8px; }
+.ab-layer { display: flex; align-items: center; gap: 16px; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 13px; padding: 14px 18px; }
+.ab-layer.todo { border-style: dashed; }
+.ab-layer-no { flex: none; font-size: 15px; font-weight: 800; color: var(--brand);
+  font-variant-numeric: tabular-nums; }
+.ab-layer-body { flex: 1; min-width: 0; }
+.ab-layer-body b { font-size: 14px; }
+.ab-layer-body p { margin: 2px 0 4px; font-size: 12.5px; color: var(--ink-2); }
+.ab-src { font-size: 11.5px; color: var(--ink-muted); }
+
+.ab-map { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+@media (max-width: 900px) { .ab-map { grid-template-columns: 1fr; } }
+.ab-mapcol { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+.ab-maphead { font-size: 11px; font-weight: 800; letter-spacing: 0.6px; margin-bottom: 8px; padding: 0 6px; }
+.ab-maphead.admin { color: var(--brand); }
+.ab-maphead.emp { color: #1d6a58; }
+.ab-maphead.all { color: var(--ink-muted); }
+.ab-mapitem { display: block; width: 100%; text-align: left; font: inherit; cursor: pointer;
+  background: none; border: 0; border-radius: 9px; padding: 8px 10px; }
+.ab-mapitem:hover { background: var(--surface-2); }
+.ab-mapitem b { display: block; font-size: 13px; }
+.ab-mapitem span { display: block; font-size: 11.5px; color: var(--ink-muted); margin-top: 1px; }
+
+.ab-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.ab-rule { display: flex; gap: 11px; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 13px; padding: 14px 16px; }
+.ab-rule i { flex: none; width: 20px; height: 20px; border-radius: 99px; font-style: normal;
+  font-size: 11px; font-weight: 800; display: grid; place-items: center;
+  background: rgba(46,139,118,0.14); color: #1d6a58; }
+.ab-rule b { display: block; font-size: 13px; }
+.ab-rule span { display: block; font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 2px; }
 
 .tc-overlay { position: fixed; inset: 0; background: rgba(12,18,32,0.45); z-index: 60;
   display: grid; place-items: start center; padding: 64px 20px 20px; overflow-y: auto; }

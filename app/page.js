@@ -2,7 +2,6 @@ import Link from "next/link";
 import { SKILLS, SKILL_EDGES, EMPLOYEES, TEAMS, PROJECTS, teamSkillMatrix, skillName } from "@/lib/data";
 import { QUESTIONS } from "@/lib/survey";
 import { TARGET_ROLES } from "@/lib/skillcheck";
-import { INTERVIEW_REQS } from "@/lib/tcData";
 import { OntologyGraph, Heatmap, HBarChart } from "@/components/charts";
 import Reveal from "@/components/Reveal";
 import HeroMark from "@/components/HeroMark";
@@ -175,46 +174,6 @@ export default function Home() {
           </Reveal>
         ))}
       </div>
-
-      {/* ── 인터뷰 반영 내역 ── */}
-      <Reveal>
-        <div className="section-head">
-          <div className="eyebrow">From Interview To Screen</div>
-          <h2>현직자가 말한 것이 화면이 되었습니다</h2>
-          <p style={{ maxWidth: "none" }}>
-            인사·인적자원개발 실무 담당자 심층 인터뷰에서 요건 {INTERVIEW_REQS.length}건을 도출했습니다.<br />
-            아래는 그 요건이 프로토타입의 어느 화면이 되었는지 순서대로 정리한 것입니다.<br />
-            반영하지 못한 항목도 후속 과제로 그대로 표시했습니다.
-          </p>
-        </div>
-        <div className="card">
-          <div className="req-stat">
-            <div><b>{INTERVIEW_REQS.filter((r) => r.status === "done").length}</b><span>화면에 반영</span></div>
-            <div><b>{INTERVIEW_REQS.filter((r) => r.status === "partial").length}</b><span>부분 반영</span></div>
-            <div><b>{INTERVIEW_REQS.filter((r) => r.status === "todo").length}</b><span>후속 과제</span></div>
-          </div>
-          <ol className="req-list">
-            {INTERVIEW_REQS.map((r, i) => (
-              <li key={i} className={r.status}>
-                <span className="req-no">{String(i + 1).padStart(2, "0")}</span>
-                <div className="req-body">
-                  <strong>{r.req}</strong>
-                  <em>&ldquo;{r.voice}&rdquo;</em>
-                </div>
-                <span className="req-area">{r.area}</span>
-                <span className="req-screen">{r.key ? r.screen : "미구현"}</span>
-                <span className={`req-tag ${r.status}`}>
-                  {r.status === "done" ? "반영" : r.status === "partial" ? "부분" : "후속"}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 14 }}>
-            <span className="hint">인터뷰 근거는 참여자 발언의 요지를 정리한 것이며 직접 인용이 아닙니다. 참여자와 소속 기업은 익명 처리했습니다.</span>
-            <Link href="/system" className="btn btn-ghost btn-pill">화면에서 확인하기 →</Link>
-          </div>
-        </div>
-      </Reveal>
 
       {/* ── 산업 동향 ── */}
       <Reveal>
