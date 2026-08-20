@@ -439,26 +439,37 @@ function Decisions() {
         </label>
       </div>
       <Card>
-        <table className="tc-table lines">
-          <thead>
-            <tr><th>일자</th><th>프로젝트 · 역할</th><th>AI 1순위</th><th>최종 선택</th><th>일치</th><th>사유</th><th>결정자</th></tr>
-          </thead>
-          <tbody>
-            {rows.map((d, i) => (
-              <tr key={i} className={d.match ? "" : "alt"}>
-                <td className="muted">{d.date}</td>
-                <td><b>{d.project}</b><div className="muted small">{d.slot}</div></td>
-                <td>{nm(d.rec)}</td>
-                <td>{nm(d.final)}</td>
-                <td>{d.match
-                  ? <span className="tc-badge mint">일치</span>
-                  : <span className="tc-badge orange">{d.cat}</span>}</td>
-                <td className="small">{d.reason || "-"}</td>
-                <td className="muted small">{d.by}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="tc-tablewrap">
+          <table className="tc-table lines tc-dec">
+            <colgroup>
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "22%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "26%" }} />
+              <col style={{ width: "11%" }} />
+            </colgroup>
+            <thead>
+              <tr><th>일자</th><th>프로젝트 · 역할</th><th>AI 1순위</th><th>최종 선택</th><th>일치</th><th>사유</th><th>결정자</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((d, i) => (
+                <tr key={i} className={d.match ? "" : "alt"}>
+                  <td className="muted num">{d.date}</td>
+                  <td className="tl"><b>{d.project}</b><div className="muted small">{d.slot}</div></td>
+                  <td>{nm(d.rec)}</td>
+                  <td><b>{nm(d.final)}</b></td>
+                  <td>{d.match
+                    ? <span className="tc-badge mint">일치</span>
+                    : <span className="tc-badge orange">{d.cat}</span>}</td>
+                  <td className="tl small">{d.reason || <span className="muted">—</span>}</td>
+                  <td className="muted small">{d.by}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       <div className="tc-grid2" style={{ marginTop: 16 }}>
@@ -853,39 +864,54 @@ function Ring({ value, label }) {
 function Career({ pathSel, setPathSel, toast }) {
   return (
     <>
-      <section className="tc-band">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/edu/hr.jpg" alt="경력 상담" />
-        <div>
-          <b>경력경로 제안</b>
-          <span>지금 위치에서 갈 수 있는 방향을 세 갈래로 정리했습니다. 선택은 본인이 합니다.</span>
-        </div>
-      </section>
+      <div className="tc-sec-head">
+        <h3>경력경로 제안</h3>
+        <span className="muted">지금 보유한 역량에서 이어질 수 있는 방향 세 가지입니다. 고르는 것도 바꾸는 것도 본인이 합니다.</span>
+      </div>
       <Notice>경력경로는 AI가 확정하는 것이 아니라 구성원이 참고하고 선택하는 추천정보입니다. 선택·수정 권한은 본인에게 있습니다.</Notice>
-      <div className="tc-cards three">
-        {PATHS.map((p) => (
-          <div key={p.key} className={`tc-person path${pathSel === p.key ? " sel" : ""}`}>
-            <div className="tc-person-top">
-              <b>경로 {p.key}</b>
-              <div className="tc-fit small">{p.match}<em>%</em></div>
-            </div>
-            <div className="tc-steps">
-              {p.steps.map((s, i) => (
-                <span key={s}>{i > 0 && <i>→</i>}<b className={i === 0 ? "muted" : ""}>{s}</b></span>
-              ))}
-            </div>
-            <dl className="tc-dl">
-              <div><dt>필요 역량</dt><dd>{p.needs.join(", ")}</dd></div>
-              <div><dt>추천 교육</dt><dd>{p.courses.join(", ")}</dd></div>
-              <div><dt>필요 프로젝트</dt><dd>{p.projects.join(", ")}</dd></div>
-              <div><dt>예상 준비기간</dt><dd>{p.period}</dd></div>
-            </dl>
-            <button className={`tc-btn ${pathSel === p.key ? "" : "primary"}`}
-                    onClick={() => { setPathSel(p.key); toast(`경로 ${p.key}를 나의 경력 목표로 설정했습니다. 언제든 변경할 수 있습니다.`); }}>
-              {pathSel === p.key ? "선택됨 (변경 가능)" : "이 경로 선택"}
-            </button>
-          </div>
-        ))}
+      <div className="tc-paths">
+        {PATHS.map((p, i) => {
+          const on = pathSel === p.key;
+          return (
+            <article key={p.key} className={`tc-path${on ? " on" : ""}`}>
+              <header className="tc-path-head">
+                <div>
+                  <span className="tc-path-key">경로 {p.key}</span>
+                  {i === 0 && <span className="tc-badge mint">추천 1순위</span>}
+                  {on && <span className="tc-badge">선택함</span>}
+                </div>
+                <div className="tc-path-match">
+                  <b>{p.match}</b><em>%</em>
+                  <span>적합도</span>
+                </div>
+              </header>
+
+              <ol className="tc-path-steps">
+                {p.steps.map((st, j) => (
+                  <li key={st} className={j === 0 ? "now" : j === p.steps.length - 1 ? "goal" : ""}>
+                    <i />
+                    <div>
+                      <b>{st}</b>
+                      <span>{j === 0 ? "현재" : j === p.steps.length - 1 ? "목표" : "중간 단계"}</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <dl className="tc-dl">
+                <div><dt>필요 역량</dt><dd>{p.needs.join(", ")}</dd></div>
+                <div><dt>추천 교육</dt><dd>{p.courses.join(", ")}</dd></div>
+                <div><dt>필요 프로젝트</dt><dd>{p.projects.join(", ")}</dd></div>
+                <div><dt>예상 준비기간</dt><dd>{p.period}</dd></div>
+              </dl>
+
+              <button className={`tc-btn ${on ? "ghost" : "primary"} tc-path-btn`}
+                      onClick={() => { setPathSel(on ? null : p.key); toast(on ? `경로 ${p.key} 선택을 해제했습니다.` : `경로 ${p.key}를 나의 경력 목표로 설정했습니다. 언제든 변경할 수 있습니다.`); }}>
+                {on ? "선택 해제" : "이 경로 선택"}
+              </button>
+            </article>
+          );
+        })}
       </div>
     </>
   );
@@ -1176,8 +1202,8 @@ function Simulation() {
       </div>
 
       <div className="tc-kpis">
-        <div className="tc-kpi warn"><b>{result.lost.length}</b><span>조직에서 사라지는 스킬</span></div>
-        <div className="tc-kpi"><b>{result.weak.length}</b><span>숙련자가 없어지는 스킬</span></div>
+        <div className="tc-kpi warn"><b>{result.lost.length}</b><span>대체자가 없는 역량</span></div>
+        <div className="tc-kpi"><b>{result.weak.length}</b><span>숙련 공백이 생기는 역량</span></div>
         <div className="tc-kpi"><b>{result.cand.length}</b><span>즉시 검토 가능한 대체 후보</span></div>
       </div>
 
@@ -1187,22 +1213,22 @@ function Simulation() {
       </div>
       <div className="tc-cards two">
         <div className="tc-card">
-          <b>사라지는 스킬</b>
+          <b>이 사람만 가진 역량</b>
           {result.lost.length ? (
             <div className="tc-chips small" style={{ marginTop: 8 }}>
               {result.lost.map(({ sk, lv }) => (
                 <span key={sk} className="tc-chip warn">{sk} <em>Lv.{lv}</em></span>
               ))}
             </div>
-          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>이 구성원만 보유한 스킬은 없습니다.</p>}
-          <b style={{ display: "block", marginTop: 16 }}>숙련자가 없어지는 스킬</b>
+          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>이 사람만 가진 역량은 없습니다. 모두 다른 구성원도 보유하고 있습니다.</p>}
+          <b style={{ display: "block", marginTop: 16 }}>숙련자가 이 사람뿐인 역량</b>
           {result.weak.length ? (
             <div className="tc-chips small" style={{ marginTop: 8 }}>
               {result.weak.map(({ sk, rest }) => (
-                <span key={sk} className="tc-chip">{sk} <em>남은 보유자 {rest}명</em></span>
+                <span key={sk} className="tc-chip">{sk} <em>남는 사람 {rest}명 · 모두 숙련 미만</em></span>
               ))}
             </div>
-          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>해당 없음.</p>}
+          ) : <p className="tc-p muted" style={{ marginTop: 8 }}>없습니다. 각 역량마다 다른 숙련자가 있습니다.</p>}
         </div>
         <div className="tc-card">
           <b>대체 후보 (규칙 기반)</b>
@@ -1426,6 +1452,18 @@ const CSS = `
 .tc-table.lines td { border-bottom: 1px solid var(--grid); }
 .tc-table tr.alt td { background: color-mix(in srgb, var(--brand) 5%, transparent); }
 .tc-table .small { font-size: 12px; }
+/* 결정 기록 표 — 짧은 열은 가운데, 문장 열(프로젝트·사유)만 왼쪽. 행 높이와 여백을 통일한다 */
+.tc-tablewrap { overflow-x: auto; }
+.tc-dec { table-layout: fixed; }
+.tc-dec th, .tc-dec td {
+  text-align: center; vertical-align: middle;
+  padding: 11px 10px; line-height: 1.55; word-break: keep-all;
+}
+.tc-dec tbody tr { height: 56px; }
+.tc-dec .tl { text-align: left; }
+.tc-dec .tc-badge { margin-left: 0; }
+.tc-dec td b { font-weight: 700; }
+.tc-dec .tl .small { margin-top: 3px; }
 
 .tc-badge { display: inline-block; font-size: 11.5px; font-weight: 700; border-radius: 999px;
   padding: 2px 9px; background: var(--surface-2); color: var(--ink-2); margin-left: 4px; }
@@ -1545,15 +1583,36 @@ const CSS = `
 .tc-goal-stat b em { font-style: normal; font-size: 13px; }
 .tc-goal-stat span { display: block; font-size: 11.5px; color: var(--ink-muted); }
 
-/* 사진 밴드 — 화면 상단에 얇게 깔리는 안내 배너 */
-.tc-band { position: relative; height: 118px; border-radius: 16px; overflow: hidden;
-  border: 1px solid var(--border); margin-bottom: 4px; display: flex; align-items: flex-end; }
-.tc-band img { position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; object-position: center 42%; filter: saturate(0.8); }
-.tc-band > div { position: relative; width: 100%; padding: 12px 20px;
-  background: linear-gradient(to top, rgba(14,26,48,0.82), rgba(14,26,48,0.05)); }
-.tc-band b { display: block; color: #fff; font-size: 15px; letter-spacing: -0.3px; }
-.tc-band span { display: block; color: rgba(255,255,255,0.82); font-size: 12.5px; margin-top: 2px; }
+/* 경력경로 카드 */
+.tc-paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 1100px) { .tc-paths { grid-template-columns: 1fr; } }
+.tc-path { display: flex; flex-direction: column; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px 20px;
+  transition: border-color .18s, box-shadow .18s; }
+.tc-path:hover { border-color: color-mix(in srgb, var(--brand) 32%, transparent); }
+.tc-path.on { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 11%, transparent); }
+.tc-path-head { display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--grid); }
+.tc-path-key { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+.tc-path-match { text-align: right; line-height: 1.15; }
+.tc-path-match b { font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--brand); }
+.tc-path-match em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--brand); }
+.tc-path-match span { display: block; font-size: 11px; color: var(--ink-muted); }
+.tc-path-steps { list-style: none; margin: 16px 0 14px; padding: 0 0 0 4px; }
+.tc-path-steps li { position: relative; display: flex; gap: 10px; padding: 0 0 16px 16px; }
+.tc-path-steps li:last-child { padding-bottom: 4px; }
+.tc-path-steps li::before { content: ""; position: absolute; left: 4px; top: 14px; bottom: 0;
+  width: 1px; background: var(--grid); }
+.tc-path-steps li:last-child::before { display: none; }
+.tc-path-steps li i { position: absolute; left: 0; top: 5px; width: 9px; height: 9px;
+  border-radius: 99px; background: var(--surface-1); border: 2px solid var(--axis); }
+.tc-path-steps li.now i { border-color: var(--ink-muted); background: var(--ink-muted); }
+.tc-path-steps li.goal i { border-color: var(--brand); background: var(--brand); }
+.tc-path-steps li b { display: block; font-size: 13.5px; }
+.tc-path-steps li.now b { color: var(--ink-muted); font-weight: 500; }
+.tc-path-steps li span { display: block; font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
+.tc-path-btn { margin-top: auto; width: 100%; }
+.tc-path .tc-dl { margin-bottom: 16px; }
 
 .tc-sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
 .tc-sec-head h3 { margin: 0; font-size: 15px; }
@@ -1632,4 +1691,44 @@ const CSS = `
   max-width: 420px; text-align: center; box-shadow: 0 14px 34px -14px rgba(0,0,0,0.45);
   animation: tcToast 0.28s ease; }
 @keyframes tcToast { from { opacity: 0; transform: translateY(-10px); } }
+
+/* ── 모바일 ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* 사이드 메뉴를 상단 가로 스크롤 탭으로 */
+  .tc-body { flex-direction: column; }
+  .tc-side { width: 100%; border-right: 0; border-bottom: 1px solid var(--border);
+    flex-direction: row; overflow-x: auto; gap: 6px; padding: 10px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tc-side::-webkit-scrollbar { display: none; }
+  .tc-side-group { display: flex; align-items: center; gap: 4px; margin-bottom: 0; }
+  .tc-side-label { padding: 0 6px 0 2px; white-space: nowrap; }
+  .tc-side button { width: auto; padding: 7px 12px; white-space: nowrap; }
+  .tc-side button .no { display: none; }
+  .tc-side-note { display: none; }
+  .tc-main { padding: 14px 16px 48px; }
+
+  /* 카드·표 */
+  .tc-grid2, .tc-cards, .tc-cards.three, .tc-cards.two, .tc-paths,
+  .tc-gaps, .tc-picklist { grid-template-columns: 1fr; }
+  .tc-picklist { max-height: 220px; }
+  .tc-kpis { grid-template-columns: 1fr 1fr; }
+  .tc-tablewrap { overflow-x: auto; }
+  .tc-dec { min-width: 720px; }
+  .tc-table.lines { min-width: 640px; }
+  .tc-filters { gap: 10px; }
+  .tc-filters input { min-width: 140px; }
+  .tc-filter-count { margin-left: 0; }
+  .tc-goal-side { border-left: 0; padding-left: 0; }
+  .tc-toasts { top: 10px; max-width: calc(100vw - 24px); }
+  .tc-toast { font-size: 12.5px; padding: 10px 14px; }
+  .tc-modal { padding: 16px; }
+  .tc-overlay { padding: 40px 12px 20px; }
+}
+@media (max-width: 560px) {
+  .tc-kpis { grid-template-columns: 1fr; }
+  .tc-head h1 { font-size: 20px; }
+  .tc-skillname { width: 110px; }
+  .tc-skillnum { width: 88px; }
+  .tc-gbar { min-width: 90px; }
+}
 `;

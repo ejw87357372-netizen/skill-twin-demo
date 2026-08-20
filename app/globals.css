@@ -663,3 +663,67 @@ select {
 
 @media (max-width: 900px) { .sc-roles { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .sc-roles { grid-template-columns: 1fr; } }
+
+/* ── 인터뷰 요건 → 화면 반영 목록 (로비) ───────────────────────── */
+.req-stat { display: flex; gap: 28px; flex-wrap: wrap; padding-bottom: 14px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--grid); }
+.req-stat b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+.req-stat span { font-size: 12px; color: var(--ink-muted); }
+.req-list { list-style: none; margin: 0; padding: 0; }
+.req-list li { display: grid; grid-template-columns: 34px 1fr 78px 128px 46px;
+  gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--grid); }
+.req-list li:last-child { border-bottom: 0; }
+.req-no { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--ink-muted); }
+.req-body strong { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.5; }
+.req-body em { display: block; font-style: normal; font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+.req-area { font-size: 11.5px; color: var(--ink-muted); }
+.req-screen { font-size: 12px; color: var(--ink-2); }
+.req-tag { font-size: 11px; font-weight: 700; text-align: center; border-radius: 999px; padding: 3px 0;
+  background: var(--surface-2); color: var(--ink-muted); }
+.req-tag.done { background: rgba(46,139,118,0.13); color: #1d6a58; }
+.req-tag.partial { background: rgba(201,106,60,0.13); color: #b45f22; }
+@media (max-width: 860px) {
+  .req-list li { grid-template-columns: 30px 1fr 46px; }
+  .req-area, .req-screen { display: none; }
+}
+
+/* ── 모바일 대응 ─────────────────────────────────────────────── */
+/* 한 줄로 유지하되 좁은 화면에서는 줄바꿈을 허용한다 */
+.one-line { white-space: nowrap; }
+@media (max-width: 900px) { .one-line { white-space: normal; } }
+
+@media (max-width: 720px) {
+  /* 상단 내비 — 로고 아래로 링크가 가로 스크롤된다 */
+  .nav-inner { gap: 10px; }
+  .nav-links {
+    margin-left: 0; width: 100%; overflow-x: auto; padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a { white-space: nowrap; flex: none; }
+
+  /* 히어로 */
+  .hero-light { border-radius: 20px; }
+  .trust-row { gap: 6px; }
+  .trust { font-size: 11px; padding: 4px 9px; }
+  .lede { font-size: 14px; }
+  .cta-row { flex-direction: column; align-items: stretch; gap: 14px; }
+  .cta-group > div { flex-wrap: wrap; }
+  .cta-row .btn { flex: 1 1 auto; text-align: center; }
+
+  /* 섹션 제목 */
+  .section-head h2 { font-size: 24px; letter-spacing: -0.6px; }
+  .section-head p { font-size: 13.5px; }
+
+  /* 카드 그리드는 한 줄에 하나 */
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .stat-strip { grid-template-columns: 1fr 1fr; }
+
+  /* 표는 가로 스크롤 */
+  table.data { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
+@media (max-width: 520px) {
+  .process { grid-template-columns: 1fr; }
+  .stat-strip { grid-template-columns: 1fr 1fr; }
+}

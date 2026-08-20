@@ -439,6 +439,42 @@ export function RiskQuadrant({ items, xMax = 8, xMid = 4.9, yMid = 50 }) {
   const x = (v) => L + (v / xMax) * (W - L - R);
   const y = (v) => T + (1 - v / 100) * (H - T - B);
   const rr = (n) => 9 + Math.min(n, 8) * 2.2;
+
+  // 라벨 겹침 제거 — 원과 다른 라벨을 피해 위·아래·좌·우 순으로 빈 자리를 찾는다
+  const tw = (t, fs) => {
+    let w = 0;
+    for (const ch of t) w += /[\u3131-\uD79D]/.test(ch) ? fs * 0.98 : fs * 0.54;
+    return w;
+  };
+  const hit = (a, b) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+  const taken = items.map((d) => {
+    const cx = x(d.rate), cy = y(d.repl), r0 = rr(d.n) + 2;
+    return { x0: cx - r0, x1: cx + r0, y0: cy - r0, y1: cy + r0 };
+  });
+  const lab = {};
+  [...items]
+    .map((d, i) => ({ d, i }))
+    .sort((a, b) => b.d.n - a.d.n)     // 인원이 많은(큰) 원부터 자리를 잡는다
+    .forEach(({ d }) => {
+      const cx = x(d.rate), cy = y(d.repl), r0 = rr(d.n);
+      const fs = 11, w = tw(d.name, fs) + 8;
+      const cands = [
+        { dx: 0, dy: -r0 - 7 }, { dx: 0, dy: r0 + 15 },
+        { dx: 0, dy: -r0 - 21 }, { dx: 0, dy: r0 + 29 },
+        { dx: r0 + 6 + w / 2, dy: 4 }, { dx: -(r0 + 6 + w / 2), dy: 4 },
+        { dx: r0 + 6 + w / 2, dy: -r0 - 7 }, { dx: -(r0 + 6 + w / 2), dy: -r0 - 7 },
+      ];
+      let c = null;
+      for (const t of cands) {
+        const box = { x0: cx + t.dx - w / 2, x1: cx + t.dx + w / 2,
+                      y0: cy + t.dy - fs, y1: cy + t.dy + 3 };
+        if (box.x0 < L - 6 || box.x1 > W - R + 4 || box.y0 < 4 || box.y1 > y(0) - 2) continue;
+        if (taken.some((z) => hit(box, z))) continue;
+        c = t; taken.push(box); break;
+      }
+      lab[d.name] = c || cands[0];
+    });
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
          aria-label="직군별 이직률과 대체 가능성 사분면" style={{ maxWidth: 760 }}>
@@ -475,10 +511,7 @@ export function RiskQuadrant({ items, xMax = 8, xMid = 4.9, yMid = 50 }) {
                     fill={danger ? "var(--series-2)" : "var(--seq-400)"}
                     fillOpacity="0.75" stroke="var(--surface-1)" strokeWidth="2"
                     data-draw="pop" style={{ animationDelay: `${i * 70}ms`, transformBox: "fill-box" }} />
-            <text x={x(d.rate)}
-                  y={y(d.repl) - rr(d.n) - 6 < T + 12
-                      ? y(d.repl) + rr(d.n) + 14   /* 위가 막히면 아래에 쓴다 */
-                      : y(d.repl) - rr(d.n) - 6}
+            <text x={x(d.rate) + lab[d.name].dx} y={y(d.repl) + lab[d.name].dy}
                   textAnchor="middle"
                   fontSize="11" fontWeight={danger ? 700 : 500}
                   fill={danger ? "var(--ink-1)" : "var(--ink-2)"}
