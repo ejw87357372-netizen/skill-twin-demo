@@ -428,3 +428,77 @@ export function RadarChart({ items, max = 7, label = "요인별 프로필 레이
     </svg>
   );
 }
+
+/**
+ * 위험 사분면 차트 — 가로축: 이직률(높을수록 자주 떠난다),
+ * 세로축: 조직 내 대체 가능성(낮을수록 대체가 어렵다), 원 크기: 인원.
+ * 오른쪽 아래(자주 떠나는데 대체가 어려운 영역)가 최우선 관리 대상이다.
+ */
+export function RiskQuadrant({ items, xMax = 8, xMid = 4.9, yMid = 50 }) {
+  const W = 720, H = 420, L = 54, R = 22, T = 20, B = 46;
+  const x = (v) => L + (v / xMax) * (W - L - R);
+  const y = (v) => T + (1 - v / 100) * (H - T - B);
+  const rr = (n) => 9 + Math.min(n, 8) * 2.2;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
+         aria-label="직군별 이직률과 대체 가능성 사분면" style={{ maxWidth: 760 }}>
+      {/* 위험 영역 음영 */}
+      <rect x={x(xMid)} y={y(yMid)} width={W - R - x(xMid)} height={y(0) - y(yMid)}
+            fill="var(--series-2)" opacity="0.07" />
+      <text x={W - R - 8} y={y(0) - 10} textAnchor="end" fontSize="11.5"
+            fill="var(--series-2)" fontWeight="700">최우선 관리 영역</text>
+
+      {/* 격자 */}
+      {[0, 25, 50, 75, 100].map((v) => (
+        <g key={v}>
+          <line x1={L} y1={y(v)} x2={W - R} y2={y(v)} stroke="var(--grid)" strokeWidth="1" />
+          <text x={L - 8} y={y(v) + 4} textAnchor="end" fontSize="10.5" fill="var(--ink-muted)" className="num">{v}</text>
+        </g>
+      ))}
+      {[0, 2, 4, 6, 8].map((v) => (
+        <text key={v} x={x(v)} y={H - 24} textAnchor="middle" fontSize="10.5" fill="var(--ink-muted)" className="num">{v}%</text>
+      ))}
+
+      {/* 기준선 */}
+      <line x1={x(xMid)} y1={T} x2={x(xMid)} y2={y(0)} stroke="var(--axis)" strokeWidth="1" strokeDasharray="4 4" />
+      <line x1={L} y1={y(yMid)} x2={W - R} y2={y(yMid)} stroke="var(--axis)" strokeWidth="1" strokeDasharray="4 4" />
+      <text x={x(xMid) + 5} y={y(0) - 8} fontSize="10.5" fill="var(--ink-muted)">전 산업 평균 {xMid}%</text>
+      <text x={L + 5} y={y(yMid) - 5} fontSize="10.5" fill="var(--ink-muted)">조직 평균 {yMid}</text>
+
+      {/* 버블 */}
+      {items.map((d, i) => {
+        const danger = d.rate >= xMid && d.repl < yMid;
+        return (
+          <g key={d.name}>
+            <title>{`${d.name} · 이직률 ${d.rate}% · 숙련자 확보율 ${d.repl} · ${d.n}명`}</title>
+            <circle cx={x(d.rate)} cy={y(d.repl)} r={rr(d.n)}
+                    fill={danger ? "var(--series-2)" : "var(--seq-400)"}
+                    fillOpacity="0.75" stroke="var(--surface-1)" strokeWidth="2"
+                    data-draw="pop" style={{ animationDelay: `${i * 70}ms`, transformBox: "fill-box" }} />
+            <text x={x(d.rate)}
+                  y={y(d.repl) - rr(d.n) - 6 < T + 12
+                      ? y(d.repl) + rr(d.n) + 14   /* 위가 막히면 아래에 쓴다 */
+                      : y(d.repl) - rr(d.n) - 6}
+                  textAnchor="middle"
+                  fontSize="11" fontWeight={danger ? 700 : 500}
+                  fill={danger ? "var(--ink-1)" : "var(--ink-2)"}
+                  stroke="var(--surface-1)" strokeWidth="3" paintOrder="stroke"
+                  data-draw="fade" style={{ animationDelay: `${400 + i * 70}ms` }}>
+              {d.name}
+            </text>
+          </g>
+        );
+      })}
+
+      <line x1={L} y1={y(0)} x2={W - R} y2={y(0)} stroke="var(--axis)" strokeWidth="1" />
+      <line x1={L} y1={T} x2={L} y2={y(0)} stroke="var(--axis)" strokeWidth="1" />
+      <text x={(L + W - R) / 2} y={H - 6} textAnchor="middle" fontSize="11.5" fill="var(--ink-2)">
+        직군별 월 이직률 (예시값) →
+      </text>
+      <text x={14} y={(T + y(0)) / 2} textAnchor="middle" fontSize="11.5" fill="var(--ink-2)"
+            transform={`rotate(-90 14 ${(T + y(0)) / 2})`}>
+        숙련자 확보율 →
+      </text>
+    </svg>
+  );
+}

@@ -3,30 +3,32 @@
 // Weave AI — 관리자·구성원 통합 데모 (단일 클라이언트 컴포넌트)
 // 백엔드·외부 API 없음. 모든 추천은 규칙 기반 가상 데이터.
 // ─────────────────────────────────────────────────────────────
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   EMPLOYEES, PROJECT, SEARCH_RESULTS, TEAM_INIT, ALTERNATES,
   GAPS, GAPS_BY_ROLE, PATHS, RETENTION, empById,
+  INTERVIEW_REQS, DECISIONS, BLIND_SPOTS, ROLE_FAMILY, FAMILY_RISK,
 } from "@/lib/tcData";
+import { RiskQuadrant } from "@/components/charts";
 
 // 화면 관점 구분: admin = 인사담당자, emp = 직원 본인, all = 전 구성원 공통
 const MENU_GROUPS = [
   ["관리자 화면", "admin", [
     ["dash", "통합 대시보드"], ["search", "AI 인재 탐색"],
     ["profiles", "인재 프로필"], ["skillgap", "스킬 갭 분석"],
-    ["matching", "프로젝트 매칭"], ["sim", "이탈 영향 시뮬레이션"],
-    ["retention", "인재 유지관리"],
+    ["matching", "프로젝트 매칭"], ["decisions", "결정 기록"],
+    ["sim", "이탈 영향 시뮬레이션"], ["retention", "인재 유지관리"],
   ]],
   ["구성원 화면", "emp", [
     ["profile", "내 역량 프로필"], ["training", "성장 로드맵"], ["career", "경력경로"],
   ]],
   ["공통", "all", [
-    ["fairness", "공정성·신뢰센터"], ["about", "시스템 안내"],
+    ["fairness", "공정성·신뢰센터"], ["research", "인터뷰 반영 내역"], ["about", "시스템 안내"],
   ]],
 ];
 const AUD = { dash: "admin", search: "admin", profiles: "admin", skillgap: "admin",
-  matching: "admin", sim: "admin", retention: "admin",
-  profile: "emp", training: "emp", career: "emp", fairness: "all", about: "all" };
+  matching: "admin", decisions: "admin", sim: "admin", retention: "admin",
+  profile: "emp", training: "emp", career: "emp", fairness: "all", research: "all", about: "all" };
 const AUD_LABEL = {
   admin: "관리자 화면",
   emp: "구성원 화면",
@@ -46,7 +48,7 @@ export default function System() {
   const [toasts, setToasts] = useState([]);
   const toast = (msg) => {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, msg }]);
+    setToasts((t) => [...t, { id, msg }].slice(-3));   // 최대 3개까지만 쌓이게
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   };
 
@@ -159,9 +161,11 @@ export default function System() {
           {screen === "career" && <Career pathSel={pathSel} setPathSel={setPathSel} toast={toast} />}
           {screen === "profiles" && <Profiles />}
           {screen === "skillgap" && <SkillGap />}
+          {screen === "decisions" && <Decisions />}
           {screen === "sim" && <Simulation />}
           {screen === "retention" && <Retention />}
           {screen === "fairness" && <Fairness toast={toast} />}
+          {screen === "research" && <Research setScreen={setScreen} />}
           {screen === "about" && <About />}
         </main>
       </div>
@@ -258,28 +262,50 @@ function Dash() {
 
 /* ═══════════ 화면 2. AI 인재 탐색 ═══════════ */
 function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFSkill, openWhy, toast }) {
+  // 필터 목록은 하드코딩하지 않고 실제 구성원 데이터에서 만든다 (선택지와 결과가 어긋나지 않게)
+  const DEPTS = useMemo(() => ["전체", ...[...new Set(EMPLOYEES.map((e) => e.dept))]], []);
+  // 선택한 부서에 실제로 있는 스킬만 보여준다. 없는 조합을 고를 수 없으니 빈 결과가 나오지 않는다.
+  const SKILLS_F = useMemo(() => {
+    // AI 분석 미동의자는 결과에서 빠지므로 선택지에도 넣지 않는다 (고를 수 있는데 0건인 상황 방지)
+    const pool = EMPLOYEES.filter((e) => e.aiConsent && (fDept === "전체" || e.dept === fDept));
+    const c = new Map();
+    pool.forEach((e) => e.skills.forEach(([k]) => c.set(k, (c.get(k) || 0) + 1)));
+    return ["전체", ...[...c.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([k]) => k)];
+  }, [fDept]);
+  // 부서를 바꿨을 때 그 부서에 없는 스킬이 선택돼 있으면 전체로 되돌린다
+  useEffect(() => {
+    if (fSkill !== "전체" && !SKILLS_F.includes(fSkill)) setFSkill("전체");
+  }, [SKILLS_F, fSkill, setFSkill]);
+  // 결과가 없을 때 보여줄 근접 후보: 스킬만 맞는 사람 (부서 조건 완화)
+  const near = useMemo(() => {
+    if (fSkill === "전체") return [];
+    return EMPLOYEES.filter((e) => e.aiConsent && e.skills.some(([k]) => k === fSkill)).slice(0, 3);
+  }, [fSkill]);
   return (
     <>
       <Card title="인재 검색">
         <div className="tc-filters">
           <label>부서
             <select value={fDept} onChange={(e) => setFDept(e.target.value)}>
-              {["전체", "인사팀", "영업본부", "마케팅팀", "디자인팀", "서비스기획팀", "디지털서비스팀", "플랫폼개발팀", "데이터팀", "AI연구팀", "인프라팀", "품질관리팀", "PMO"].map((d) => <option key={d}>{d}</option>)}
+              {DEPTS.map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
           <label>보유 기술
             <select value={fSkill} onChange={(e) => setFSkill(e.target.value)}>
-              {["전체", "Java", "Spring Boot", "Python", "Oracle", "데이터 모델링", "머신러닝", "AWS", "Kubernetes", "React", "Figma", "UX 리서치", "테스트 자동화", "프로젝트 관리", "HR 데이터 분석", "B2B 영업", "콘텐츠 기획", "광고 운영"].map((d) => <option key={d}>{d}</option>)}
+              {SKILLS_F.map((d) => <option key={d}>{d}</option>)}
             </select>
           </label>
           <button className="tc-btn primary" onClick={() => { setSearched(true); toast(results.length ? `조건에 맞는 후보 ${results.length}명을 찾았습니다. (규칙 기반 매칭)` : "조건에 맞는 후보가 없습니다. 필터를 조정해 보세요."); }}>검색</button>
-          <span className="muted tc-p" style={{ margin: 0 }}>그 외 필터: 숙련도 · 자격증 · 희망 직무 · 투입 가능 시점 · 경력연수</span>
+          <span className="muted tc-p" style={{ margin: 0 }}>보유 기술 목록은 선택한 부서에 실제로 있는 기술만 표시됩니다. 그 외 필터: 숙련도 · 자격증 · 희망 직무 · 투입 가능 시점 · 경력연수</span>
         </div>
       </Card>
 
       {searched && (
         <>
-          <Notice>적합도는 구성원의 우열을 평가하는 점수가 아니라, 현재 프로젝트 요구조건과 등록된 역량정보의 일치 정도입니다.</Notice>
+          <Notice>
+            적합도는 사람의 우열을 매긴 점수가 아닙니다. 이 프로젝트가 요구하는 조건과 그 사람이 등록해 둔 역량 정보가
+            얼마나 겹치는지를 나타낸 값입니다. 역량 정보를 적게 입력한 사람은 실제보다 낮게 나올 수 있습니다.
+          </Notice>
           <div className="tc-cards">
             {results.map((r) => {
               const e = empById(r.id);
@@ -304,7 +330,29 @@ function Search({ searched, setSearched, results, fDept, setFDept, fSkill, setFS
                 </div>
               );
             })}
-            {!results.length && <p className="tc-p muted">필터 조건에 맞는 추천 결과가 없습니다. 조건을 바꿔 다시 검색해 보세요.</p>}
+            {!results.length && (
+              <div className="tc-card" style={{ gridColumn: "1 / -1" }}>
+                <b>이 조건에 맞는 구성원이 없습니다</b>
+                <p className="tc-p muted" style={{ marginTop: 6 }}>
+                  {fDept !== "전체" && fSkill !== "전체"
+                    ? `${fDept}에는 '${fSkill}' 보유자가 등록되어 있지 않습니다.`
+                    : "선택한 조건에 해당하는 구성원이 없습니다."}
+                  {near.length > 0 && " 부서 조건을 빼면 아래 후보를 볼 수 있습니다."}
+                </p>
+                {near.length > 0 && (
+                  <>
+                    <div className="tc-chips small" style={{ marginTop: 8 }}>
+                      {near.map((e) => (
+                        <span key={e.id} className="tc-chip">{e.name} <em>{e.dept}</em></span>
+                      ))}
+                    </div>
+                    <button className="tc-btn tiny" onClick={() => { setFDept("전체"); toast(`부서 조건을 해제하고 '${fSkill}' 보유자를 다시 찾습니다.`); }}>
+                      부서 조건 해제하고 다시 검색
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <p className="tc-p muted">
             AI 분석에 동의하지 않은 구성원은 이 목록에 나타나지 않습니다. 미동의로 인한 불이익은 없습니다.
@@ -332,6 +380,173 @@ function WhyBody({ r }) {
         <dd>현재 업무 부하, 본인 참여 의사, 부족 역량의 교육 보완 계획</dd>
       </dl>
       <p className="tc-p muted">본 근거는 규칙 기반으로 생성된 데모용 예시입니다.</p>
+    </>
+  );
+}
+
+/* AI가 반영하지 못하는 정성 요인 — 심층 인터뷰 3-2-9에서 도출 */
+function BlindSpots() {
+  const [ok, setOk] = useState({});
+  const done = BLIND_SPOTS.filter(([k]) => ok[k]).length;
+  return (
+    <Card title="이 추천에 반영되지 않은 요소" tone={done === BLIND_SPOTS.length ? "mint" : "warn"}>
+      <p className="tc-p muted" style={{ marginTop: 0 }}>
+        아래 항목은 데이터로 존재하지 않아 AI가 계산하지 못합니다. 배치 전에 담당자가 직접 확인해 주세요.
+        ({done}/{BLIND_SPOTS.length} 확인)
+      </p>
+      {BLIND_SPOTS.map(([k, why]) => (
+        <label key={k} className="tc-check">
+          <input type="checkbox" checked={!!ok[k]} onChange={() => setOk((x) => ({ ...x, [k]: !x[k] }))} />
+          <span><b>{k}</b> <span className="muted small">— {why}</span></span>
+        </label>
+      ))}
+    </Card>
+  );
+}
+
+/* ═══════════ 화면. 결정 기록 (AI 추천 대비 최종 결정) ═══════════ */
+function Decisions() {
+  const [only, setOnly] = useState(false);
+  const rows = only ? DECISIONS.filter((d) => !d.match) : DECISIONS;
+  const total = DECISIONS.length;
+  const agreed = DECISIONS.filter((d) => d.match).length;
+  const rate = Math.round((agreed / total) * 100);
+  // 불일치 사유 유형 분포
+  const cats = {};
+  DECISIONS.filter((d) => !d.match).forEach((d) => { cats[d.cat] = (cats[d.cat] || 0) + 1; });
+  const catRows = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const nm = (id) => (empById(id) ? empById(id).name : id);
+
+  return (
+    <>
+      <Notice>
+        AI 추천과 다른 결정을 내린 경우 사유를 남기도록 한 기록입니다. 최종 결정은 사람이 하되,
+        그 판단도 확인 가능해야 한다는 심층 인터뷰 요구를 반영했습니다.
+      </Notice>
+
+      <div className="tc-kpis">
+        <div className="tc-kpi"><b>{total}</b><span>기록된 배치 결정</span></div>
+        <div className="tc-kpi"><b>{rate}<em style={{ fontSize: 14, fontStyle: "normal" }}>%</em></b><span>AI 추천 채택률</span></div>
+        <div className="tc-kpi warn"><b>{total - agreed}</b><span>추천과 다른 결정</span></div>
+        <div className="tc-kpi"><b>{total - agreed}</b><span>사유 기록 완료</span></div>
+      </div>
+
+      <div className="tc-sec-head">
+        <h3>결정 목록</h3>
+        <label className="tc-check tiny" style={{ margin: 0 }}>
+          <input type="checkbox" checked={only} onChange={() => setOnly(!only)} />
+          추천과 다른 결정만 보기
+        </label>
+      </div>
+      <Card>
+        <table className="tc-table lines">
+          <thead>
+            <tr><th>일자</th><th>프로젝트 · 역할</th><th>AI 1순위</th><th>최종 선택</th><th>일치</th><th>사유</th><th>결정자</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((d, i) => (
+              <tr key={i} className={d.match ? "" : "alt"}>
+                <td className="muted">{d.date}</td>
+                <td><b>{d.project}</b><div className="muted small">{d.slot}</div></td>
+                <td>{nm(d.rec)}</td>
+                <td>{nm(d.final)}</td>
+                <td>{d.match
+                  ? <span className="tc-badge mint">일치</span>
+                  : <span className="tc-badge orange">{d.cat}</span>}</td>
+                <td className="small">{d.reason || "-"}</td>
+                <td className="muted small">{d.by}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <div className="tc-grid2" style={{ marginTop: 16 }}>
+        <Card title="추천과 다른 결정의 사유 유형">
+          {catRows.map(([c, n]) => (
+            <div key={c} className="tc-skillrow">
+              <span className="tc-skillname">{c}</span>
+              <div className="tc-gbar"><i style={{ width: `${(n / (total - agreed)) * 100}%` }} /></div>
+              <span className="tc-skillnum">{n}건</span>
+            </div>
+          ))}
+          <p className="tc-p muted">
+            사유 유형이 특정 항목에 몰리면 추천 기준을 손봐야 한다는 신호입니다.
+            예컨대 &lsquo;일정 중복&rsquo;이 반복되면 투입 가능 시점을 추천 조건에 넣어야 합니다.
+          </p>
+        </Card>
+        <Card title="이 기록이 필요한 이유">
+          <ul className="tc-ul">
+            <li>AI 추천을 따르지 않은 판단도 근거를 남겨 자의적 결정을 막습니다.</li>
+            <li>채택률과 사유 분포는 추천 기준을 개선하는 자료가 됩니다.</li>
+            <li>구성원이 배치 결과에 이의를 제기할 때 확인할 수 있는 기록이 됩니다.</li>
+          </ul>
+          <p className="tc-p muted">기록 열람 권한은 인사 담당자와 해당 부서장으로 제한됩니다.</p>
+        </Card>
+      </div>
+    </>
+  );
+}
+
+/* ═══════════ 화면. 인터뷰 반영 내역 ═══════════ */
+function Research({ setScreen }) {
+  const [area, setArea] = useState("전체");
+  const areas = ["전체", ...new Set(INTERVIEW_REQS.map((r) => r.area))];
+  const rows = area === "전체" ? INTERVIEW_REQS : INTERVIEW_REQS.filter((r) => r.area === area);
+  const n = (st) => INTERVIEW_REQS.filter((r) => r.status === st).length;
+  const LABEL = { done: "반영", partial: "부분 반영", todo: "후속 과제" };
+  const TONE = { done: "mint", partial: "orange", todo: "" };
+
+  return (
+    <>
+      <Notice>
+        인사·인적자원개발 실무 담당자 심층 인터뷰에서 도출한 요건이 각각 어느 화면이 되었는지 정리한 표입니다.
+        반영하지 못한 항목도 후속 과제로 함께 표시합니다.
+      </Notice>
+
+      <div className="tc-kpis">
+        <div className="tc-kpi"><b>{INTERVIEW_REQS.length}</b><span>도출된 요건</span></div>
+        <div className="tc-kpi"><b>{n("done")}</b><span>화면에 반영</span></div>
+        <div className="tc-kpi"><b>{n("partial")}</b><span>부분 반영</span></div>
+        <div className="tc-kpi warn"><b>{n("todo")}</b><span>후속 과제</span></div>
+      </div>
+
+      <div className="tc-filters">
+        <label>영역
+          <select value={area} onChange={(e) => setArea(e.target.value)}>
+            {areas.map((a) => <option key={a}>{a}</option>)}
+          </select>
+        </label>
+        <span className="tc-filter-count">{rows.length}건</span>
+      </div>
+
+      <Card>
+        <table className="tc-table lines">
+          <thead>
+            <tr><th>영역</th><th>도출된 요건</th><th>인터뷰 근거</th><th>구현 화면</th><th>상태</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td className="muted small">{r.area}</td>
+                <td><b>{r.req}</b></td>
+                <td className="small muted">&ldquo;{r.voice}&rdquo;</td>
+                <td>
+                  {r.key
+                    ? <button className="tc-btn tiny ghost" onClick={() => setScreen(r.key)}>{r.screen} →</button>
+                    : <span className="muted small">미구현</span>}
+                </td>
+                <td><span className={`tc-badge ${TONE[r.status]}`}>{LABEL[r.status]}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <p className="tc-p muted">
+        인터뷰 근거는 참여자 발언의 요지를 정리한 것이며 직접 인용이 아닙니다.
+        참여자와 소속 기업은 익명 처리했습니다.
+      </p>
     </>
   );
 }
@@ -375,6 +590,8 @@ function Matching({ team, setTeam, confirmed, setConfirmed, setExcludeTarget, ch
         </table>
         <p className="tc-p muted">후보 제외 시 사유를 기록해야 하며, 규칙 기반으로 대체 후보가 추천됩니다.</p>
       </Card>
+
+      <BlindSpots />
 
       <Card title="배치 확정 전 공정성 점검" tone={placed ? "mint" : allChecked ? "" : "warn"}>
         {CHECKS.map((c, i) => (
@@ -490,11 +707,25 @@ function eduImg(skill, course) {
   return hit ? { src: `/edu/${hit[1]}.jpg`, alt: hit[2] } : { src: "/edu/data.jpg", alt: "직무 교육" };
 }
 
+/* 같은 역량을 채우는 다른 방법 — 심층 인터뷰: 사내교육만으로는 직무개발을 지원하지 못한다 */
+function meansOf(g) {
+  return [
+    { kind: "사내교육", name: g.course, hours: g.hours,
+      note: "사내 교육과정으로 개설되어 있습니다" },
+    { kind: "외부교육", name: `${g.skill} 심화 과정 (외부 전문기관)`, hours: g.hours + 8,
+      note: "사내 과정보다 깊이 있게 다루며 수강료 지원 대상입니다" },
+    { kind: "프로젝트·멘토링", name: `${g.skill} 적용 사내 과제 + 선임 멘토링`, hours: Math.round(g.hours * 1.5),
+      note: "실제 과제에 투입되어 배우는 방식입니다. 멘토가 배정됩니다" },
+  ];
+}
+
 function Training({ wantRole, me, courseState, setCourseState, toast }) {
   const gaps = GAPS_BY_ROLE[wantRole] || GAPS;
+  const [altIdx, setAltIdx] = useState({});   // 역량별로 선택한 학습수단
   const set = (c, st, msg) => { setCourseState((x) => ({ ...x, [c]: st })); toast(msg); };
+  const meanOf = (g) => meansOf(g)[altIdx[g.skill] || 0];
   const enrolled = gaps.filter((g) => courseState[g.course] === "enrolled");
-  const totalHours = enrolled.reduce((a, g) => a + g.hours, 0);
+  const totalHours = enrolled.reduce((a, g) => a + meanOf(g).hours, 0);
   // 준비도 = 현재 수준 합 / 목표 수준 합
   const ready = Math.round(
     (gaps.reduce((a, g) => a + g.cur, 0) / gaps.reduce((a, g) => a + g.target, 0)) * 100);
@@ -526,7 +757,7 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
 
       <div className="tc-sec-head">
         <h3>보완이 필요한 역량 {gaps.length}개</h3>
-        <span className="muted">우선순위는 목표 직무의 요구 수준과의 차이 순입니다.</span>
+        <span className="muted">우선순위는 목표 직무의 요구 수준과의 차이 순입니다. &lsquo;다른 방법&rsquo;을 누르면 사내교육 · 외부교육 · 프로젝트·멘토링으로 바뀝니다.</span>
       </div>
 
       <div className="tc-gaps">
@@ -560,11 +791,16 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
               <p className="tc-p" style={{ margin: "10px 0 12px" }}>{g.why}</p>
 
               <div className="tc-course">
-                <div className="tc-course-name">{g.course}</div>
+                <div className="tc-course-head">
+                  <span className={`tc-badge ${["", "orange", "mint"][altIdx[g.skill] || 0]}`}>{meanOf(g).kind}</span>
+                  <span className="muted small">{(altIdx[g.skill] || 0) + 1} / 3</span>
+                </div>
+                <div className="tc-course-name">{meanOf(g).name}</div>
                 <dl className="tc-dl">
-                  <div><dt>학습시간</dt><dd>약 {g.hours}시간</dd></div>
+                  <div><dt>학습시간</dt><dd>약 {meanOf(g).hours}시간</dd></div>
                   <div><dt>완료 시</dt><dd>{g.link} 참여 가능</dd></div>
                 </dl>
+                <p className="tc-p muted" style={{ margin: "6px 0 0" }}>{meanOf(g).note}</p>
               </div>
 
               <div className="tc-row wrap" style={{ marginTop: "auto", paddingTop: 12 }}>
@@ -575,7 +811,11 @@ function Training({ wantRole, me, courseState, setCourseState, toast }) {
                   <>
                     <button className="tc-btn tiny" onClick={() => set(g.course, "enrolled", `'${g.course}' 수강 신청이 접수되었습니다.`)}>수강 신청</button>
                     <button className="tc-btn tiny ghost" onClick={() => set(g.course, "dismissed", "이 추천을 숨겼습니다. 사유는 추천 개선에 사용됩니다.")}>관심 없음</button>
-                    <button className="tc-btn tiny ghost" onClick={() => toast("유사 교육 2건: AI 서비스 설계 프로젝트, 데이터 시각화 실무")}>다른 교육</button>
+                    <button className="tc-btn tiny ghost" onClick={() => {
+                      const next = ((altIdx[g.skill] || 0) + 1) % 3;
+                      setAltIdx((x) => ({ ...x, [g.skill]: next }));
+                      toast(`'${g.skill}'을(를) ${meansOf(g)[next].kind} 방식으로 바꿨습니다.`);
+                    }}>다른 방법</button>
                   </>
                 )}
               </div>
@@ -802,8 +1042,45 @@ function SkillGap() {
    "이 사람이 나가면 무엇이 비는가"를 규칙 기반으로 계산해 보여준다. */
 function Simulation() {
   const [target, setTarget] = useState(EMPLOYEES[0].id);
+  const [fd, setFd] = useState("전체");
+  const [q, setQ] = useState("");
   const me = empById(target);
   const others = EMPLOYEES.filter((e) => e.id !== target);
+  const depts = ["전체", ...new Set(EMPLOYEES.map((e) => e.dept))];
+  const picks = EMPLOYEES.filter((e) => {
+    if (fd !== "전체" && e.dept !== fd) return false;
+    if (!q.trim()) return true;
+    const t = `${e.name} ${e.role} ${e.dept} ${e.skills.map(([k]) => k).join(" ")}`;
+    return t.toLowerCase().includes(q.trim().toLowerCase());
+  });
+
+  // 직군별 이탈 위험: 이직률(예시값) × 조직 내 대체 가능성(보유 데이터로 계산)
+  const families = useMemo(() => {
+    // 대체 가능성은 '보유자가 있는가'가 아니라 '숙련자가 있는가'로 본다.
+    // 이름만 걸쳐 있는 사람은 공백을 메우지 못한다는 인터뷰 지적을 반영했다.
+    const hold = new Map();  // 스킬 → 숙련자(레벨 4 이상) 수
+    EMPLOYEES.forEach((e) => e.skills.forEach(([k, lv]) => {
+      if (lv >= 4) hold.set(k, (hold.get(k) || 0) + 1);
+    }));
+    const g = new Map();
+    EMPLOYEES.forEach((e) => {
+      const f = ROLE_FAMILY[e.role] || "기타";
+      if (!g.has(f)) g.set(f, { name: f, n: 0, sk: new Set() });
+      const o = g.get(f); o.n += 1; e.skills.forEach(([k]) => o.sk.add(k));
+    });
+    return [...g.values()]
+      .filter((o) => FAMILY_RISK[o.name])
+      .map((o) => {
+        const sk = [...o.sk];
+        const covered = sk.filter((k) => (hold.get(k) || 0) >= 2).length;
+        return { ...o, repl: Math.round((covered / sk.length) * 100),
+                 rate: FAMILY_RISK[o.name].rate, ...FAMILY_RISK[o.name] };
+      })
+      .sort((a, b) => (b.rate - b.repl / 20) - (a.rate - a.repl / 20));
+  }, []);
+  // 위험 판정 기준선: 가로 = 전 산업 평균 이직률(공표치), 세로 = 이 조직의 평균 숙련자 확보율
+  const orgAvg = families.length
+    ? Math.round(families.reduce((a, f) => a + f.repl, 0) / families.length) : 50;
 
   const result = useMemo(() => {
     const lost = [], weak = [];
@@ -833,14 +1110,69 @@ function Simulation() {
   return (
     <>
       <Notice>가정 시나리오입니다. 실제 이탈 예측이 아니며, 특정 구성원에 대한 판단 근거로 사용하지 않습니다.</Notice>
+
+      {/* ── 1단계: 어느 직군이 위험한가 ── */}
+      <div className="tc-sec-head">
+        <h3>직군별 이탈 위험</h3>
+        <span className="muted">자주 떠나는 직군일수록 오른쪽, 대체가 어려운 직군일수록 아래에 놓입니다.</span>
+      </div>
+      <Card>
+        <RiskQuadrant items={families} yMid={orgAvg} />
+        <p className="tc-p muted">
+          가로축은 산업 동향 탭의 이직률 구조를 참고한 <b>직군별 예시값</b>이며 공표 통계가 아닙니다.
+          세로축은 이 조직의 실제 보유 데이터로 계산했습니다. 해당 직군이 쓰는 스킬 중
+          <b> 숙련자(레벨 4 이상)가 두 명 이상인 스킬의 비율</b>이며, 낮을수록 한 사람이 나갔을 때
+          그 자리를 메울 사람이 없다는 뜻입니다. 기준선은 이 조직의 평균({orgAvg})입니다.
+        </p>
+      </Card>
+
+      <Card title="직군별 대응 방향">
+        <table className="tc-table lines">
+          <thead>
+            <tr><th>직군</th><th>인원</th><th>이직률</th><th>숙련자 확보율</th><th>왜 떠나는가</th><th>권고 대응</th></tr>
+          </thead>
+          <tbody>
+            {families.map((f) => {
+              const danger = f.rate >= 4.9 && f.repl < orgAvg;
+              return (
+                <tr key={f.name} className={danger ? "alt" : ""}>
+                  <td><b>{f.name}</b>{danger && <span className="tc-badge orange" style={{ marginLeft: 6 }}>우선</span>}</td>
+                  <td className="muted">{f.n}명</td>
+                  <td className="num">{f.rate}%</td>
+                  <td className="num">{f.repl}</td>
+                  <td className="small muted">{f.why}</td>
+                  <td className="small">{f.action}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Card>
+
+      {/* ── 2단계: 개인 단위 영향 ── */}
+      <div className="tc-sec-head" style={{ marginTop: 22 }}>
+        <h3>개인 단위 영향 확인</h3>
+        <span className="muted">부서로 좁히거나 이름·기술로 검색해 대상을 고르세요.</span>
+      </div>
       <div className="tc-filters">
-        <label>대상 구성원
-          <select value={target} onChange={(e) => setTarget(e.target.value)}>
-            {EMPLOYEES.map((e) => (
-              <option key={e.id} value={e.id}>{e.name} · {e.dept} · {e.role}</option>
-            ))}
+        <label>부서
+          <select value={fd} onChange={(e) => setFd(e.target.value)}>
+            {depts.map((d) => <option key={d}>{d}</option>)}
           </select>
         </label>
+        <label>검색
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름·직무·기술" />
+        </label>
+        <span className="tc-filter-count">{picks.length}명</span>
+      </div>
+      <div className="tc-picklist">
+        {picks.map((e) => (
+          <button key={e.id} className={`tc-pick${e.id === target ? " on" : ""}`} onClick={() => setTarget(e.id)}>
+            <b>{e.name}</b>
+            <span>{e.dept} · {e.role} · {e.years}년</span>
+          </button>
+        ))}
+        {!picks.length && <p className="tc-p muted">검색 결과가 없습니다.</p>}
       </div>
 
       <div className="tc-kpis">
@@ -1187,6 +1519,15 @@ const CSS = `
   padding: 9px 0; border-bottom: 1px solid var(--grid); }
 .tc-altrow:last-child { border-bottom: 0; }
 .tc-altrow > div b, .tc-person-top > div > b { display: block; }
+/* 대상 구성원 고르기 — 인원이 늘어도 훑어보고 고를 수 있게 목록형으로 */
+.tc-picklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px;
+  max-height: 260px; overflow-y: auto; padding: 4px; margin-bottom: 4px; }
+.tc-pick { text-align: left; font: inherit; cursor: pointer; padding: 9px 12px; border-radius: 10px;
+  background: var(--surface-1); border: 1px solid var(--border); transition: border-color .14s, background .14s; }
+.tc-pick:hover { border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+.tc-pick.on { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 7%, transparent); }
+.tc-pick b { display: block; font-size: 13.5px; }
+.tc-pick span { display: block; font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; }
 .tc-altrow .tc-sub { margin-top: 1px; }
 @media (max-width: 1180px) { .tc-cards.three { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 760px) { .tc-cards, .tc-cards.three { grid-template-columns: 1fr; } }
@@ -1225,6 +1566,7 @@ const CSS = `
   border: 1px solid var(--border); border-radius: 14px; padding: 0 18px 16px;
   overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s; }
 /* 카드 상단 사진 — 좌우 패딩을 넘어 카드 폭을 꽉 채운다 */
+.tc-course-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .tc-gapthumb { margin: 0 -18px 14px; height: 104px; overflow: hidden;
   background: linear-gradient(135deg, #dbe4f2, #eef2f8); }
 .tc-gapthumb img { width: 100%; height: 100%; object-fit: cover; display: block;
@@ -1275,15 +1617,19 @@ const CSS = `
 .tc-flowhead { font-weight: 800; font-size: 14px; margin-bottom: 6px; color: var(--brand); }
 
 .tc-overlay { position: fixed; inset: 0; background: rgba(12,18,32,0.45); z-index: 60;
-  display: grid; place-items: center; padding: 20px; }
+  display: grid; place-items: start center; padding: 64px 20px 20px; overflow-y: auto; }
 .tc-modal { background: var(--surface-1); border-radius: 16px; padding: 20px 22px; width: min(560px, 100%);
   max-height: 84vh; overflow: auto; box-shadow: 0 30px 70px -30px rgba(0,0,0,0.4); }
 .tc-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .tc-modal-head b { font-size: 15px; }
 .tc-modal-head button { border: 0; background: none; font-size: 16px; cursor: pointer; color: var(--ink-muted); }
 
-.tc-toasts { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 70; }
+/* 토스트는 화면 위쪽 가운데 — 하단은 카드 버튼과 겹쳐 놓치기 쉽다 */
+.tc-toasts { position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 70;
+  width: max-content; max-width: calc(100vw - 32px); pointer-events: none; }
 .tc-toast { background: #16273f; color: #fff; font-size: 13px; border-radius: 10px; padding: 11px 16px;
-  max-width: 340px; box-shadow: 0 12px 30px -12px rgba(0,0,0,0.4); animation: tcToast 0.3s ease; }
-@keyframes tcToast { from { opacity: 0; transform: translateY(8px); } }
+  max-width: 420px; text-align: center; box-shadow: 0 14px 34px -14px rgba(0,0,0,0.45);
+  animation: tcToast 0.28s ease; }
+@keyframes tcToast { from { opacity: 0; transform: translateY(-10px); } }
 `;
